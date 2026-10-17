@@ -1,10 +1,14 @@
 import React from 'react';
-import { Menu, Bell, BarChart2, AlertCircle, ArrowLeftRight } from 'lucide-react';
+import { Bell, BarChart2, AlertCircle, ArrowLeftRight } from 'lucide-react';
+import BorrowingTrendChart from './BorrowingTrendChart';
+import equiptraceLogo from '../../assets/equiptrace-logo.png';
 
 export default function AdminAnalytics({
   kpis = { totalEquipment: 248, available: 183, borrowed: 42, overdue: 8 },
   equipmentList = [],
-  transactions = []
+  transactions = [],
+  onOpenNotifications,
+  unreadCount = 0,
 }) {
   const total = kpis.totalEquipment || equipmentList.length || 1;
   const borrowed = kpis.borrowed || 0;
@@ -30,23 +34,23 @@ export default function AdminAnalytics({
         paddingTop: '4px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
-            backgroundColor: '#1D61E7',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(29, 97, 231, 0.2)'
-          }}>
-            <Menu size={20} color="#FFFFFF" strokeWidth={2.5} />
-          </div>
+          <img
+            src={equiptraceLogo}
+            alt="EquipTrace"
+            style={{
+              height: '38px',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+          />
           <span style={{
-            fontSize: '1.3rem',
+            fontSize: '1.2rem',
             fontWeight: '800',
             color: '#0F1E36',
-            letterSpacing: '-0.3px'
+            letterSpacing: '-0.3px',
+            borderLeft: '2px solid #CBD5E1',
+            paddingLeft: '12px',
+            lineHeight: '1.2'
           }}>
             Analytics
           </span>
@@ -54,6 +58,7 @@ export default function AdminAnalytics({
 
         <button
           type="button"
+          onClick={onOpenNotifications}
           style={{
             position: 'relative',
             background: 'none',
@@ -64,18 +69,21 @@ export default function AdminAnalytics({
             alignItems: 'center',
             justifyContent: 'center'
           }}
+          aria-label="Notifications"
         >
           <Bell size={24} color="#1D61E7" strokeWidth={2.2} />
-          <span style={{
-            position: 'absolute',
-            top: '5px',
-            right: '5px',
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            backgroundColor: '#EF4444',
-            border: '2px solid #FFFFFF'
-          }} />
+          {unreadCount > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '5px',
+              right: '5px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#EF4444',
+              border: '2px solid #FFFFFF'
+            }} />
+          )}
         </button>
       </div>
 
@@ -188,64 +196,8 @@ export default function AdminAnalytics({
         </div>
       </div>
 
-      {/* Borrowing trend Chart Section matching Screenshot 1 */}
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: '18px',
-        padding: '18px 20px',
-        border: '1px solid #E2E8F0',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px',
-        boxShadow: '0 2px 8px rgba(13, 26, 48, 0.03)'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#0F1E36' }}>
-            Borrowing trend
-          </h3>
-          <span style={{ fontSize: '0.775rem', color: '#64748B', fontWeight: '600' }}>
-            Last 30 days
-          </span>
-        </div>
-
-        {/* SVG Area Chart */}
-        <div style={{ width: '100%', height: '140px', position: 'relative' }}>
-          <svg viewBox="0 0 300 120" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-            <line x1="25" y1="20" x2="295" y2="20" stroke="#F1F5F9" strokeWidth="1" />
-            <line x1="25" y1="50" x2="295" y2="50" stroke="#F1F5F9" strokeWidth="1" />
-            <line x1="25" y1="80" x2="295" y2="80" stroke="#F1F5F9" strokeWidth="1" />
-
-            <text x="5" y="24" fontSize="8" fill="#94A3B8">40</text>
-            <text x="5" y="54" fontSize="8" fill="#94A3B8">30</text>
-            <text x="5" y="84" fontSize="8" fill="#94A3B8">20</text>
-
-            <defs>
-              <linearGradient id="analyticsGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1D61E7" stopOpacity="0.25" />
-                <stop offset="100%" stopColor="#1D61E7" stopOpacity="0.0" />
-              </linearGradient>
-            </defs>
-
-            <path
-              d="M 25 80 L 50 72 L 75 76 L 100 60 L 125 68 L 150 55 L 175 60 L 200 45 L 225 50 L 250 38 L 275 44 L 295 30 L 295 95 L 25 95 Z"
-              fill="url(#analyticsGradient)"
-            />
-
-            <path
-              d="M 25 80 L 50 72 L 75 76 L 100 60 L 125 68 L 150 55 L 175 60 L 200 45 L 225 50 L 250 38 L 275 44 L 295 30"
-              fill="none"
-              stroke="#1D61E7"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            />
-
-            <text x="35" y="112" fontSize="9" fill="#94A3B8">Sep 1</text>
-            <text x="110" y="112" fontSize="9" fill="#94A3B8">Sep 11</text>
-            <text x="185" y="112" fontSize="9" fill="#94A3B8">Sep 21</text>
-            <text x="260" y="112" fontSize="9" fill="#94A3B8">Sep 30</text>
-          </svg>
-        </div>
-      </div>
+      {/* Interactive Borrowing Trend Chart */}
+      <BorrowingTrendChart title="Borrowing trend" transactions={transactions} />
 
       {/* Most borrowed equipment Section matching Screenshot 1 */}
       <div style={{
@@ -324,6 +276,9 @@ export default function AdminAnalytics({
           </div>
         </div>
       </div>
+
+      {/* Clearance spacer for floating bottom navigation bar */}
+      <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { User, Lock, Menu, AlertCircle, Eye, EyeOff } from 'lucide-react';
-import { auth, signInWithEmailAndPassword } from '../services/firebase';
+import { User, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { auth, signInWithEmailAndPassword, sendPasswordResetEmail } from '../services/firebase';
+import equiptraceLogo from '../assets/equiptrace-logo.png';
 
 export default function LoginScreen({ onLogin }) {
   const [role, setRole] = useState('Student');
@@ -11,18 +12,13 @@ export default function LoginScreen({ onLogin }) {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
 
-  // Authorized school accounts
-  const AUTHORIZED_ACCOUNTS = {
-    Student: [
-      { id: '2025-001', pin: 'student123' },
-      { id: '2023-0149', pin: 'student123' },
-      { id: '2022-8901', pin: 'student123' }
-    ],
-    Admin: [
-      { id: 'admin', pin: 'admin123' },
-      { id: 'pe-office', pin: 'admin123' }
-    ]
-  };
+  const [forgotId, setForgotId] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+
+  const toEmail = (id, r) =>
+    id.includes('@') ? id : `${id.toLowerCase()}@${r === 'Admin' ? 'equiptrace-admin.edu' : 'equiptrace.edu'}`;
 
   const handleRoleChange = (newRole) => {
     setRole(newRole);
@@ -41,42 +37,59 @@ export default function LoginScreen({ onLogin }) {
     }
 
     setAuthLoading(true);
-
     try {
-      // 1. If using Firebase Auth with an email or custom domain
-      const emailTarget = trimmedId.includes('@') 
-        ? trimmedId 
-        : `${trimmedId.toLowerCase()}@equiptrace.edu`;
+      const email = toEmail(trimmedId, role);
+      const cred = await signInWithEmailAndPassword(auth, email, trimmedPass);
+      const authedEmail = (cred.user.email || email).toLowerCase();
 
-      let firebaseSuccess = false;
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, emailTarget, trimmedPass);
-        if (userCredential && userCredential.user) {
-          firebaseSuccess = true;
-        }
-      } catch (fbErr) {
-        // Firebase auth not yet seeded or configured with this user, proceed to verified directory check
+      // Check if this is an Admin account
+      const isAdminAccount =
+        authedEmail.includes('@equiptrace-admin.edu') ||
+        authedEmail.startsWith('admin@') ||
+        authedEmail === 'admin@gmail.com';
+
+      // ── Strict Role Boundary Enforcement ──
+      if (role === 'Student' && isAdminAccount) {
+        await auth.signOut();
+        setErrorMessage('This account is registered as an Administrator. Please switch to the "Admin" tab to sign in.');
+        return;
       }
 
-      // 2. Validate against official authorized system accounts
-      const validRoleAccounts = AUTHORIZED_ACCOUNTS[role];
-      const matchedAccount = validRoleAccounts.find(
-        acc => acc.id.toLowerCase() === trimmedId.toLowerCase() && acc.pin === trimmedPass
-      );
-
-      if (firebaseSuccess || matchedAccount) {
-        onLogin({ role, studentId: trimmedId });
-      } else {
-        setErrorMessage(
-          role === 'Student'
-            ? 'Invalid Student ID or password. (Try ID: 2025-001 / Pass: student123)'
-            : 'Invalid Admin credentials. (Try ID: admin / Pass: admin123)'
-        );
+      if (role === 'Admin' && !isAdminAccount) {
+        await auth.signOut();
+        setErrorMessage('Access denied. This email is not authorized for Administrator access. Please use the "Student" tab.');
+        return;
       }
+
+      const finalRole = isAdminAccount ? 'Admin' : 'Student';
+      onLogin({ role: finalRole, studentId: trimmedId, uid: cred.user.uid, email: authedEmail });
     } catch (err) {
-      setErrorMessage(err.message || 'Authentication failed. Please try again.');
+      const code = err.code || '';
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setErrorMessage('Invalid ID or password. Please check your credentials.');
+      } else if (code === 'auth/too-many-requests') {
+        setErrorMessage('Too many failed attempts. Please try again later.');
+      } else {
+        setErrorMessage(err.message || 'Authentication failed. Please try again.');
+      }
     } finally {
       setAuthLoading(false);
+    }
+  };
+
+  const handleForgotSubmit = async () => {
+    const id = forgotId.trim() || studentId.trim();
+    if (!id) { setForgotError('Please enter your ID first.'); return; }
+    setForgotLoading(true);
+    setForgotError('');
+    try {
+      const email = toEmail(id, role);
+      await sendPasswordResetEmail(auth, email);
+      setForgotSent(true);
+    } catch (err) {
+      setForgotError('Could not send reset email. Please check your ID.');
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -93,31 +106,19 @@ export default function LoginScreen({ onLogin }) {
     }}>
       {/* Upper Content */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '10px' }}>
-        {/* Circle Logo */}
-        <div style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '50%',
-          backgroundColor: '#1D61E7',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: '20px',
-          boxShadow: '0 8px 20px rgba(29, 97, 231, 0.25)'
-        }}>
-          <Menu size={36} color="#FFFFFF" strokeWidth={2.5} />
+        {/* EquipTrace Official Logo */}
+        <div style={{ marginBottom: '14px', marginTop: '6px' }}>
+          <img
+            src={equiptraceLogo}
+            alt="EquipTrace"
+            style={{
+              width: '260px',
+              maxHeight: '90px',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+          />
         </div>
-
-        {/* Brand Title */}
-        <h1 style={{
-          fontSize: '1.75rem',
-          fontWeight: '800',
-          color: '#0F1E36',
-          letterSpacing: '-0.5px',
-          marginBottom: '4px'
-        }}>
-          EQUIPTRACE
-        </h1>
         <p style={{
           fontSize: '0.875rem',
           color: '#64748B',
@@ -359,79 +360,51 @@ export default function LoginScreen({ onLogin }) {
       {/* Forgot Password Modal */}
       {showForgotModal && (
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'rgba(15, 30, 54, 0.6)',
-          zIndex: 100,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
-          backdropFilter: 'blur(3px)'
+          position: 'absolute', inset: 0,
+          backgroundColor: 'rgba(15,30,54,0.6)', zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px', backdropFilter: 'blur(3px)'
         }}>
           <div style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: '20px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '320px',
-            textAlign: 'center',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
+            backgroundColor: '#FFFFFF', borderRadius: '20px',
+            padding: '24px', width: '100%', maxWidth: '320px',
+            textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
           }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '8px', color: '#0F1E36' }}>
-              Reset Password
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '20px', lineHeight: '1.4' }}>
-              Please enter your Student ID to receive password reset instructions.
-            </p>
-            <input
-              type="text"
-              defaultValue={studentId}
-              placeholder="Student ID"
-              style={{
-                width: '100%',
-                height: '44px',
-                padding: '0 14px',
-                borderRadius: '10px',
-                border: '1px solid #E2E8F0',
-                marginBottom: '16px',
-                fontSize: '0.9rem'
-              }}
-            />
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: '1px solid #E2E8F0',
-                  backgroundColor: '#FFFFFF',
-                  color: '#64748B',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  backgroundColor: '#1D61E7',
-                  color: '#FFFFFF',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                Send Link
-              </button>
-            </div>
+            {forgotSent ? (
+              <>
+                <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📧</div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#0F1E36', marginBottom: '8px' }}>Email Sent!</h3>
+                <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '20px', lineHeight: '1.4' }}>
+                  Check your inbox for password reset instructions.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setShowForgotModal(false); setForgotSent(false); setForgotId(''); }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '10px', border: 'none', backgroundColor: '#1D61E7', color: '#FFFFFF', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}
+                >Close</button>
+              </>
+            ) : (
+              <>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '8px', color: '#0F1E36' }}>Reset Password</h3>
+                <p style={{ fontSize: '0.85rem', color: '#64748B', marginBottom: '16px', lineHeight: '1.4' }}>
+                  Enter your ID and we'll send a reset link to your registered email.
+                </p>
+                <input
+                  type="text"
+                  value={forgotId || studentId}
+                  onChange={(e) => setForgotId(e.target.value)}
+                  placeholder={role === 'Student' ? 'Student ID (e.g. 2025-001)' : 'Admin ID'}
+                  style={{ width: '100%', height: '44px', padding: '0 14px', borderRadius: '10px', border: '1px solid #E2E8F0', marginBottom: '8px', fontSize: '0.9rem', fontFamily: 'inherit', outline: 'none' }}
+                />
+                {forgotError && <p style={{ fontSize: '0.8rem', color: '#DC2626', marginBottom: '8px' }}>{forgotError}</p>}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                  <button type="button" onClick={() => { setShowForgotModal(false); setForgotSent(false); setForgotError(''); }} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF', color: '#64748B', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+                  <button type="button" onClick={handleForgotSubmit} disabled={forgotLoading} style={{ flex: 1, padding: '10px', borderRadius: '10px', border: 'none', backgroundColor: forgotLoading ? '#93C5FD' : '#1D61E7', color: '#FFFFFF', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {forgotLoading ? 'Sending...' : 'Send Link'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

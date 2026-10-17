@@ -60,13 +60,7 @@ body {
 }
 
 .device-frame-toggle-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  margin-bottom: 12px;
-  color: #94A3B8;
-  font-size: 0.825rem;
+  display: none;
 }
 
 .device-frame-toggle-btn {
@@ -146,16 +140,95 @@ body {
   scroll-behavior: smooth;
 }
 
+.screen-container.has-floating-nav {
+  padding-bottom: 84px;
+}
+
+.screen-container.modal-open {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+/* Bottom padding clearance so cards and items are never cut off by the floating nav */
+.admin-equipment,
+.admin-home,
+.admin-requests,
+.admin-return-approval,
+.admin-analytics,
+.admin-more,
+.home-screen,
+.borrowings-screen,
+.profile-screen {
+  padding-bottom: 110px !important;
+}
+
 .screen-container::-webkit-scrollbar {
-  width: 4px;
+  display: none;
 }
 
-.screen-container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+.screen-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Bottom Navigation Bar */
+/* Floating Pill Navigation Bar (matching reference Pic 2) */
+.bottom-nav-floating {
+  position: absolute;
+  bottom: 12px;
+  left: 14px;
+  right: 14px;
+  height: 60px;
+  background: #FFFFFF;
+  border-radius: 9999px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 4px 6px;
+  z-index: 50;
+  backdrop-filter: blur(8px);
+}
+
+.floating-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 9999px;
+  height: 46px;
+  color: #64748B;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  outline: none;
+  font-family: inherit;
+}
+
+.floating-nav-btn:hover {
+  color: var(--primary-blue);
+  background-color: #F8FAFC;
+}
+
+.floating-nav-btn.active {
+  background-color: var(--primary-blue);
+  color: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(29, 97, 231, 0.35);
+  transform: scale(1.02);
+}
+
+.floating-nav-btn.active svg {
+  stroke: #FFFFFF;
+  color: #FFFFFF;
+}
+
+.floating-nav-btn.active:hover {
+  background-color: var(--primary-blue-hover);
+}
+
+/* Legacy bottom nav fallback */
 .bottom-nav {
   height: 72px;
   background: #FFFFFF;
@@ -192,6 +265,7 @@ body {
   stroke: var(--primary-blue);
   transform: translateY(-1px);
 }
+
 
 /* Common UI Components */
 .btn-primary {
@@ -327,3 +401,100 @@ body {
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   animation: fadeIn 0.3s ease;
 }
+
+@keyframes slideDownBanner {
+  0% {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Hide scrollbar utility for sleek horizontal & vertical containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hover-scroll container: completely bar-free, protected against flex shrinkage */
+.hover-scroll-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  padding: 4px 2px 8px 2px;
+  flex-shrink: 0;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+}
+
+.hover-scroll-container::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Interactive Filter Pill Button Styles */
+.filter-pill-btn {
+  padding: 8px 18px;
+  border-radius: 9999px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  flex-shrink: 0;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.filter-pill-btn:hover {
+  transform: translateY(-1.5px);
+}
+
+.filter-pill-btn:active {
+  transform: translateY(0);
+}
+
+.filter-pill-btn.inactive {
+  background-color: #FFFFFF;
+  color: #64748B;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.filter-pill-btn.inactive:hover {
+  background-color: #F1F5F9;
+  color: #1D61E7;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.filter-pill-btn.active {
+  background-color: #1D61E7;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(29, 97, 231, 0.25);
+}
+
+.filter-pill-btn.active:hover {
+  background-color: #1551CA;
+  box-shadow: 0 4px 12px rgba(29, 97, 231, 0.35);
+}
+
+

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Menu, Bell, Search, Plus } from 'lucide-react';
+import { Bell, Search, Plus } from 'lucide-react';
+import equiptraceLogo from '../../assets/equiptrace-logo.png';
 
 export default function AdminEquipment({
   equipmentList = [],
-  onOpenAddModal
+  onOpenAddModal,
+  onOpenNotifications,
+  unreadCount = 0,
 }) {
   const [filter, setFilter] = useState('All'); // 'All' | 'Available' | 'Borrowed' | 'Overdue'
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,7 +23,7 @@ export default function AdminEquipment({
     <div className="admin-equipment animate-fade-in" style={{
       display: 'flex',
       flexDirection: 'column',
-      padding: '16px 20px 24px 20px',
+      padding: '16px 20px 108px 20px',
       backgroundColor: '#F8FAFC',
       minHeight: '100%',
       gap: '16px'
@@ -33,23 +36,23 @@ export default function AdminEquipment({
         paddingTop: '4px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
-            backgroundColor: '#1D61E7',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(29, 97, 231, 0.2)'
-          }}>
-            <Menu size={20} color="#FFFFFF" strokeWidth={2.5} />
-          </div>
+          <img
+            src={equiptraceLogo}
+            alt="EquipTrace"
+            style={{
+              height: '38px',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+          />
           <span style={{
-            fontSize: '1.3rem',
+            fontSize: '1.2rem',
             fontWeight: '800',
             color: '#0F1E36',
-            letterSpacing: '-0.3px'
+            letterSpacing: '-0.3px',
+            borderLeft: '2px solid #CBD5E1',
+            paddingLeft: '12px',
+            lineHeight: '1.2'
           }}>
             Equipment
           </span>
@@ -57,6 +60,7 @@ export default function AdminEquipment({
 
         <button
           type="button"
+          onClick={onOpenNotifications}
           style={{
             position: 'relative',
             background: 'none',
@@ -67,51 +71,48 @@ export default function AdminEquipment({
             alignItems: 'center',
             justifyContent: 'center'
           }}
+          aria-label="Notifications"
         >
           <Bell size={24} color="#1D61E7" strokeWidth={2.2} />
-          <span style={{
-            position: 'absolute',
-            top: '5px',
-            right: '5px',
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            backgroundColor: '#EF4444',
-            border: '2px solid #FFFFFF'
-          }} />
+          {unreadCount > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '5px',
+              right: '5px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#EF4444',
+              border: '2px solid #FFFFFF'
+            }} />
+          )}
         </button>
       </div>
 
       {/* Filter Tabs matching Screenshot 4 */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        overflowX: 'auto',
-        paddingBottom: '2px'
-      }}>
-        {['All', 'Available', 'Borrowed', 'Overdue'].map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setFilter(tab)}
-            style={{
-              padding: '8px 18px',
-              borderRadius: '9999px',
-              border: 'none',
-              backgroundColor: filter === tab ? '#1D61E7' : '#FFFFFF',
-              color: filter === tab ? '#FFFFFF' : '#64748B',
-              border: filter === tab ? 'none' : '1px solid #E2E8F0',
-              fontWeight: '700',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontFamily: 'inherit',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            {tab}
-          </button>
-        ))}
+      <div 
+        className="hover-scroll-container"
+        style={{ minHeight: '48px', flexShrink: 0 }}
+        onWheel={(e) => {
+          if (e.deltaY !== 0) {
+            e.currentTarget.scrollLeft += e.deltaY * 0.7;
+          }
+        }}
+      >
+        {['All', 'Available', 'Borrowed', 'Overdue'].map((tab) => {
+          const isActive = filter === tab;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setFilter(tab)}
+              className={`filter-pill-btn ${isActive ? 'active' : 'inactive'}`}
+              style={{ padding: '8px 18px', fontSize: '0.85rem' }}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
       {/* Search Bar matching Screenshot 4 */}
@@ -152,24 +153,26 @@ export default function AdminEquipment({
         onClick={onOpenAddModal}
         style={{
           width: '100%',
-          height: '48px',
+          height: '46px',
           backgroundColor: '#1D61E7',
           color: '#FFFFFF',
           border: 'none',
-          borderRadius: '14px',
+          borderRadius: '9999px',
           fontSize: '0.95rem',
           fontWeight: '700',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '6px',
-          boxShadow: '0 4px 12px rgba(29, 97, 231, 0.25)',
-          fontFamily: 'inherit'
+          gap: '8px',
+          boxShadow: '0 4px 14px rgba(29, 97, 231, 0.3)',
+          fontFamily: 'inherit',
+          transition: 'all 0.2s ease',
+          flexShrink: 0
         }}
       >
-        <Plus size={20} strokeWidth={2.5} />
-        + Add equipment
+        <Plus size={20} strokeWidth={2.6} />
+        Add equipment
       </button>
 
       {/* Equipment List Cards matching Image 4 */}
@@ -280,6 +283,9 @@ export default function AdminEquipment({
           </div>
         ))}
       </div>
+
+      {/* Clearance spacer for floating bottom navigation bar */}
+      <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
     </div>
   );
 }

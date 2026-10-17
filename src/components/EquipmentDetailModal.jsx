@@ -7,30 +7,42 @@ export default function EquipmentDetailModal({ equipment, onClose, onConfirmBorr
   if (!equipment) return null;
 
   return (
-    <div style={{
-      position: 'absolute',
-      inset: 0,
-      backgroundColor: 'rgba(15, 30, 54, 0.65)',
-      zIndex: 90,
-      display: 'flex',
-      alignItems: 'flex-end',
-      justifyContent: 'center',
-      backdropFilter: 'blur(4px)',
-      animation: 'fadeIn 0.2s ease'
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        width: '100%',
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
-        padding: '24px 20px 28px 20px',
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) onClose();
+      }}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: 'rgba(15, 30, 54, 0.65)',
+        zIndex: 100,
         display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        boxShadow: '0 -10px 30px rgba(0,0,0,0.2)',
-        maxHeight: '90%',
-        overflowY: 'auto'
-      }}>
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease',
+        overscrollBehavior: 'contain',
+        touchAction: 'none',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: '#FFFFFF',
+          width: '100%',
+          borderTopLeftRadius: '24px',
+          borderTopRightRadius: '24px',
+          padding: '24px 20px 28px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          boxShadow: '0 -10px 30px rgba(0,0,0,0.2)',
+          maxHeight: '90%',
+          overflowY: 'auto',
+          overscrollBehavior: 'contain',
+          touchAction: 'auto',
+        }}
+      >
         {/* Top Header Row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{

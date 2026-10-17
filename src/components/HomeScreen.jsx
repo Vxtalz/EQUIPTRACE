@@ -1,5 +1,6 @@
 import React from 'react';
-import { Menu, Bell, QrCode, Search, FileText } from 'lucide-react';
+import { Bell, QrCode, Search, FileText } from 'lucide-react';
+import equiptraceLogo from '../assets/equiptrace-logo.png';
 
 export default function HomeScreen({
   student,
@@ -24,28 +25,16 @@ export default function HomeScreen({
         justifyContent: 'space-between',
         paddingTop: '4px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Circular Menu Logo */}
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
-            backgroundColor: '#1D61E7',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(29, 97, 231, 0.2)'
-          }}>
-            <Menu size={20} color="#FFFFFF" strokeWidth={2.5} />
-          </div>
-          <span style={{
-            fontSize: '1.2rem',
-            fontWeight: '800',
-            color: '#0F1E36',
-            letterSpacing: '-0.3px'
-          }}>
-            EQUIPTRACE
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img
+            src={equiptraceLogo}
+            alt="EquipTrace"
+            style={{
+              height: '40px',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+          />
         </div>
 
         {/* Notifications Icon Button */}
@@ -315,6 +304,9 @@ export default function HomeScreen({
           </div>
         </div>
       </div>
+
+      {/* Clearance spacer for floating bottom navigation bar */}
+      <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
     </div>
   );
 }

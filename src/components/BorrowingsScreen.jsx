@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, CheckCircle2, RotateCcw, PackageCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, RotateCcw, PackageCheck, Clock } from 'lucide-react';
 
 export default function BorrowingsScreen({
   onBack,
@@ -150,16 +150,30 @@ export default function BorrowingsScreen({
                       }}>
                         {item.id}
                       </span>
-                      <span style={{
-                        fontSize: '0.75rem',
-                        fontWeight: '700',
-                        color: '#15803D',
-                        backgroundColor: '#DCFCE7',
-                        padding: '2px 8px',
-                        borderRadius: '9999px'
-                      }}>
-                        Active
-                      </span>
+                      {item.status === 'Return Pending' ? (
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '800',
+                          color: '#B45309',
+                          backgroundColor: '#FEF3C7',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          border: '1px solid #FDE68A'
+                        }}>
+                          Return Pending
+                        </span>
+                      ) : (
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '700',
+                          color: '#15803D',
+                          backgroundColor: '#DCFCE7',
+                          padding: '2px 8px',
+                          borderRadius: '9999px'
+                        }}>
+                          Active
+                        </span>
+                      )}
                     </div>
                     <h3 style={{
                       fontSize: '1rem',
@@ -176,41 +190,68 @@ export default function BorrowingsScreen({
                 </div>
 
                 <div style={{
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: item.status === 'Return Pending' ? '#FFFBEB' : '#F8FAFC',
                   borderRadius: '10px',
                   padding: '10px 12px',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  fontSize: '0.8rem'
+                  fontSize: '0.8rem',
+                  border: item.status === 'Return Pending' ? '1px solid #FDE68A' : 'none',
                 }}>
-                  <span style={{ color: '#64748B', fontWeight: '500' }}>Return Due:</span>
-                  <span style={{ color: '#0F1E36', fontWeight: '700' }}>Today before 5:00 PM</span>
+                  <span style={{ color: '#64748B', fontWeight: '500' }}>
+                    {item.status === 'Return Pending' ? 'Return Status:' : 'Return Due:'}
+                  </span>
+                  <span style={{ color: item.status === 'Return Pending' ? '#B45309' : '#0F1E36', fontWeight: '700' }}>
+                    {item.status === 'Return Pending' ? 'Handed in · Awaiting Inspection' : 'Today before 5:00 PM'}
+                  </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => onReturnEquipment(item.borrowId)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    border: '1px solid #1D61E7',
-                    backgroundColor: '#EEF4FF',
-                    color: '#1D61E7',
-                    fontWeight: '700',
-                    fontSize: '0.875rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    transition: 'all 0.2s ease',
-                    fontFamily: 'inherit'
-                  }}
-                >
-                  <RotateCcw size={16} />
-                  Return Equipment
-                </button>
+                {item.status === 'Return Pending' ? (
+                  <div
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      backgroundColor: '#FEF3C7',
+                      color: '#B45309',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      border: '1px solid #FDE68A',
+                    }}
+                  >
+                    <Clock size={16} />
+                    Pending Admin Approval
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onReturnEquipment(item.borrowId)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      border: '1px solid #1D61E7',
+                      backgroundColor: '#EEF4FF',
+                      color: '#1D61E7',
+                      fontWeight: '700',
+                      fontSize: '0.875rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease',
+                      fontFamily: 'inherit'
+                    }}
+                  >
+                    <RotateCcw size={16} />
+                    Return Equipment
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -273,6 +314,9 @@ export default function BorrowingsScreen({
           )}
         </div>
       )}
+
+      {/* Clearance spacer for floating bottom navigation bar */}
+      <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
     </div>
   );
 }

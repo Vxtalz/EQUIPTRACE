@@ -154,7 +154,29 @@ app.post('/api/requests/:id/action', (req, res) => {
   }
 
   reqItem.status = action === 'approve' ? 'Approved' : 'Rejected';
-  res.json({ success: true, data: reqItem });
+
+  const today = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
+  const newTx = {
+    id: `TX-${Date.now()}`,
+    equipmentId: reqItem.equipmentId || '',
+    equipment: `${reqItem.equipmentName} ${reqItem.equipmentCode}`,
+    studentName: reqItem.studentName,
+    studentInitials: reqItem.studentInitials || (reqItem.studentName ? reqItem.studentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'ST'),
+    studentId: reqItem.studentId || '',
+    date: today,
+    borrowDate: new Date().toISOString(),
+    status: action === 'approve' ? 'Borrowed' : 'Rejected'
+  };
+  borrowingRecords.unshift(newTx);
+
+  if (action === 'approve') {
+    const item = equipmentStore.find(e => e.id === reqItem.equipmentId);
+    if (item && item.available > 0) {
+      item.available -= 1;
+    }
+  }
+
+  res.json({ success: true, data: reqItem, transaction: newTx });
 });
 
 // 5. Firebase Cloud Messaging (FCM) Notification Trigger

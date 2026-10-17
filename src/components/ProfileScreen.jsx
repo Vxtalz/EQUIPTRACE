@@ -203,6 +203,9 @@ export default function ProfileScreen({
           Logout Account
         </button>
       </div>
+
+      {/* Clearance spacer for floating bottom navigation bar */}
+      <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
     </div>
   );
 }

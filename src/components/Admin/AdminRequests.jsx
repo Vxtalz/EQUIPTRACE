@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Menu, Bell, CheckCircle2, XCircle } from 'lucide-react';
+import { Bell, CheckCircle2, XCircle } from 'lucide-react';
+import equiptraceLogo from '../../assets/equiptrace-logo.png';
 
 export default function AdminRequests({
   requests = [],
   onApproveRequest,
-  onRejectRequest
+  onRejectRequest,
+  onOpenNotifications,
+  unreadCount = 0,
 }) {
   const [filterTab, setFilterTab] = useState('Pending'); // 'Pending' | 'Approved' | 'Rejected'
 
@@ -38,23 +41,23 @@ export default function AdminRequests({
         paddingTop: '4px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '50%',
-            backgroundColor: '#1D61E7',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 10px rgba(29, 97, 231, 0.2)'
-          }}>
-            <Menu size={20} color="#FFFFFF" strokeWidth={2.5} />
-          </div>
+          <img
+            src={equiptraceLogo}
+            alt="EquipTrace"
+            style={{
+              height: '38px',
+              objectFit: 'contain',
+              display: 'block'
+            }}
+          />
           <span style={{
-            fontSize: '1.3rem',
+            fontSize: '1.2rem',
             fontWeight: '800',
             color: '#0F1E36',
-            letterSpacing: '-0.3px'
+            letterSpacing: '-0.3px',
+            borderLeft: '2px solid #CBD5E1',
+            paddingLeft: '12px',
+            lineHeight: '1.2'
           }}>
             Borrowing requests
           </span>
@@ -62,6 +65,7 @@ export default function AdminRequests({
 
         <button
           type="button"
+          onClick={onOpenNotifications}
           style={{
             position: 'relative',
             background: 'none',
@@ -72,18 +76,21 @@ export default function AdminRequests({
             alignItems: 'center',
             justifyContent: 'center'
           }}
+          aria-label="Notifications"
         >
           <Bell size={24} color="#1D61E7" strokeWidth={2.2} />
-          <span style={{
-            position: 'absolute',
-            top: '5px',
-            right: '5px',
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            backgroundColor: '#EF4444',
-            border: '2px solid #FFFFFF'
-          }} />
+          {unreadCount > 0 && (
+            <span style={{
+              position: 'absolute',
+              top: '5px',
+              right: '5px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: '#EF4444',
+              border: '2px solid #FFFFFF'
+            }} />
+          )}
         </button>
       </div>
 
@@ -327,6 +334,9 @@ export default function AdminRequests({
           ))
         )}
       </div>
+
+      {/* Clearance spacer for floating bottom navigation bar */}
+      <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
     </div>
   );
 }

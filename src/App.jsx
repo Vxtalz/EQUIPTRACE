@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import MobileFrameWrapper from './components/MobileFrameWrapper';
 import LoginScreen from './components/LoginScreen';
@@ -16,227 +16,603 @@ import AdminEquipment from './components/Admin/AdminEquipment';
 import AdminRequests from './components/Admin/AdminRequests';
 import AdminAnalytics from './components/Admin/AdminAnalytics';
 import AdminMore from './components/Admin/AdminMore';
+import AdminReturnApproval from './components/Admin/AdminReturnApproval';
 import AddEquipmentModal from './components/Admin/AddEquipmentModal';
 
+// Firebase Auth
+import { auth, onAuthStateChanged, signOut } from './services/firebase';
+
+// Firestore Service
+import {
+  subscribeEquipment,
+  subscribeBorrowings,
+  subscribeHistory,
+  subscribeRequests,
+  subscribeReturnApprovals,
+  subscribeTransactions,
+  subscribeNotifications,
+  addBorrowing,
+  deleteBorrowing,
+  addHistory,
+  updateEquipment,
+  updateRequest,
+  submitReturnPending,
+  approveReturnSubmission,
+  flagReturnForInspection,
+  addTransaction,
+  addNotification,
+  markNotificationsRead,
+  addEquipment as fsAddEquipment,
+  seedEquipmentIfEmpty,
+  getUserProfile,
+  upsertUserProfile,
+} from './services/firestoreService';
+
+// Fallback mock data (used only if Firestore collections are empty on first load)
 import {
   CURRENT_STUDENT,
   INITIAL_EQUIPMENT_LIST,
-  INITIAL_BORROWINGS,
-  INITIAL_HISTORY,
-  INITIAL_NOTIFICATIONS
+  INITIAL_NOTIFICATIONS,
 } from './data/mockData';
 
 import {
   INITIAL_ADMIN_KPIS,
-  INITIAL_ADMIN_PENDING_REQUESTS,
-  INITIAL_ADMIN_RECENT_TRANSACTIONS,
-  INITIAL_ADMIN_EQUIPMENT_LIST
 } from './data/adminMockData';
 
-import { api } from './services/api';
-import { db } from './services/firebase';
-
 export default function App() {
+  // ── Auth state ──────────────────────────────────────────────────────────────
+  const [authUser, setAuthUser] = useState(null);   // Firebase user object
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState('Student'); // 'Student' | 'Admin'
-  const [currentTab, setCurrentTab] = useState('home'); // Student: home|scan|borrowings|profile. Admin: home|equipment|requests|analytics|more
+  const [userRole, setUserRole] = useState('Student');
+  const [currentTab, setCurrentTab] = useState('home');
+  const [authReady, setAuthReady] = useState(false); // loading until auth resolves
 
-  // Student State
+  // ── Student state ────────────────────────────────────────────────────────────
   const [student, setStudent] = useState(CURRENT_STUDENT);
   const [equipmentList, setEquipmentList] = useState(INITIAL_EQUIPMENT_LIST);
-  const [borrowings, setBorrowings] = useState(INITIAL_BORROWINGS);
-  const [history, setHistory] = useState(INITIAL_HISTORY);
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const [borrowings, setBorrowings] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [notifications, setNotifications] = useState([]);
 
-  // Admin State
+  // ── Admin state ──────────────────────────────────────────────────────────────
   const [adminKpis, setAdminKpis] = useState(INITIAL_ADMIN_KPIS);
-  const [adminRequests, setAdminRequests] = useState(INITIAL_ADMIN_PENDING_REQUESTS);
-  const [adminRecentTx, setAdminRecentTx] = useState(INITIAL_ADMIN_RECENT_TRANSACTIONS);
-  const [adminEquipment, setAdminEquipment] = useState(INITIAL_ADMIN_EQUIPMENT_LIST);
+  const [adminRequests, setAdminRequests] = useState([]);
+  const [adminRecentTx, setAdminRecentTx] = useState([]);
+  const [adminEquipment, setAdminEquipment] = useState([]);
+  const [adminReturnApprovals, setAdminReturnApprovals] = useState([]);
+  const [adminDismissedReadIds, setAdminDismissedReadIds] = useState(() => new Set());
 
-  // Modals & Popups
+  // ── Modals ───────────────────────────────────────────────────────────────────
   const [scannedEquipment, setScannedEquipment] = useState(null);
   const [showBrowse, setShowBrowse] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAddEquipmentModal, setShowAddEquipmentModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [activePushBanner, setActivePushBanner] = useState(null);
 
-  // Sync with Backend / Firebase on launch
-  useEffect(() => {
-    async function initData() {
-      const serverEquipment = await api.getEquipment();
-      if (serverEquipment && serverEquipment.length > 0) {
-        setEquipmentList(prev => {
-          return serverEquipment.map((item, idx) => ({
-            ...item,
-            image: prev[idx % prev.length]?.image || 'https://images.unsplash.com/photo-1519766304817-4f37bda74a29?w=300'
-          }));
-        });
-        setAdminEquipment(serverEquipment);
-      }
+  // Keep unsubscribe refs so we can clean up on logout
+  const unsubRefs = useRef([]);
 
-      const serverRequests = await api.getRequests();
-      if (serverRequests && serverRequests.length > 0) {
-        setAdminRequests(serverRequests);
-      }
-
-      const serverTransactions = await api.getTransactions();
-      if (serverTransactions && serverTransactions.length > 0) {
-        setAdminRecentTx(serverTransactions);
-      }
-
-      const analyticsData = await api.getAnalytics();
-      if (analyticsData && analyticsData.kpis) {
-        setAdminKpis(analyticsData.kpis);
-      }
-    }
-    initData();
-  }, []);
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+  const triggerPushBanner = (banner) => {
+    setActivePushBanner(banner);
+    setTimeout(() => {
+      setActivePushBanner((current) => (current === banner ? null : current));
+    }, 4500);
+  };
 
   const triggerToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage('');
-    }, 3500);
+    setTimeout(() => setToastMessage(''), 3500);
   };
 
-  const handleLogin = ({ role, studentId }) => {
+  const clearAllSubs = () => {
+    unsubRefs.current.forEach((unsub) => { try { unsub(); } catch (e) {} });
+    unsubRefs.current = [];
+  };
+
+  // ── Firebase Auth listener ────────────────────────────────────────────────────
+  useEffect(() => {
+    // Fallback safety timeout so app never gets stuck on splash screen
+    const safetyTimer = setTimeout(() => {
+      setAuthReady(true);
+    }, 3500);
+
+    const unsub = onAuthStateChanged(
+      auth,
+      async (user) => {
+        clearTimeout(safetyTimer);
+        if (user) {
+          setAuthUser(user);
+          setIsLoggedIn(true);
+          const email = user.email || '';
+
+          // Strictly identify Admin accounts
+          const isAdmin =
+            email.toLowerCase().includes('@equiptrace-admin.edu') ||
+            email.toLowerCase().startsWith('admin@') ||
+            email.toLowerCase() === 'admin@gmail.com';
+
+          const userRoleResolved = isAdmin ? 'Admin' : 'Student';
+          setUserRole(userRoleResolved);
+
+          // Safely load profile from Firestore with timeout protection
+          try {
+            const profile = await Promise.race([
+              getUserProfile(user.uid),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+            ]);
+
+            if (profile) {
+              setStudent({
+                id: profile.studentId || user.email?.split('@')[0] || '',
+                name: profile.name || user.displayName || user.email?.split('@')[0] || '',
+                course: profile.course || 'BS Physical Education',
+                yearLevel: profile.yearLevel || '3rd Year',
+                email: user.email,
+              });
+            } else {
+              const fallbackId = user.email?.split('@')[0] || '';
+              setStudent((prev) => ({ ...prev, id: fallbackId, email: user.email }));
+            }
+          } catch (e) {
+            console.warn('[Firestore] Profile fetch skipped or timed out:', e.message);
+            const fallbackId = user.email?.split('@')[0] || '';
+            setStudent((prev) => ({ ...prev, id: fallbackId, email: user.email }));
+          }
+
+          attachFirestoreListeners(user, userRoleResolved);
+        } else {
+          // Logged out — clean up
+          localStorage.removeItem('equiptrace_role');
+          setAuthUser(null);
+          setIsLoggedIn(false);
+          clearAllSubs();
+          // Reset state
+          setEquipmentList(INITIAL_EQUIPMENT_LIST);
+          setBorrowings([]);
+          setHistory([]);
+          setNotifications([]);
+          setAdminRequests([]);
+          setAdminRecentTx([]);
+          setAdminEquipment([]);
+        }
+        setAuthReady(true);
+      },
+      (error) => {
+        console.error('[Firebase Auth Error]', error);
+        clearTimeout(safetyTimer);
+        setAuthReady(true);
+      }
+    );
+
+    return () => {
+      clearTimeout(safetyTimer);
+      unsub();
+    };
+  }, []);
+
+  // ── Firestore real-time subscriptions ────────────────────────────────────────
+  function attachFirestoreListeners(user, role) {
+    clearAllSubs();
+
+    // Auto-seed items to Firestore database if it was just created
+    seedEquipmentIfEmpty(INITIAL_EQUIPMENT_LIST);
+
+    // Equipment (all roles)
+    const unsubEq = subscribeEquipment((items) => {
+      if (items.length > 0) {
+        // Merge images from local fallback list since Firestore won't store external URLs
+        setEquipmentList(items.map((item, idx) => ({
+          ...item,
+          image: item.image || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
+        })));
+        if (role === 'Admin') setAdminEquipment(items);
+      } else {
+        // Fallback to initial inventory so scanner and catalog work instantly
+        setEquipmentList(INITIAL_EQUIPMENT_LIST);
+        if (role === 'Admin') setAdminEquipment(INITIAL_EQUIPMENT_LIST);
+      }
+    });
+    unsubRefs.current.push(unsubEq);
+
+    if (role === 'Student') {
+      const uid = user.uid;
+
+      // Active borrowings
+      const unsubBorrow = subscribeBorrowings(uid, (rows) => setBorrowings(rows));
+      unsubRefs.current.push(unsubBorrow);
+
+      // Return history
+      const unsubHist = subscribeHistory(uid, (rows) => setHistory(rows));
+      unsubRefs.current.push(unsubHist);
+
+      // Notifications
+      const unsubNotif = subscribeNotifications(uid, (rows) => setNotifications(rows));
+      unsubRefs.current.push(unsubNotif);
+
+    } else {
+      // Admin
+      const unsubReq = subscribeRequests((rows) => {
+        setAdminRequests(rows);
+        // Recompute KPIs from live equipment
+        setAdminKpis((prev) => ({ ...prev }));
+      });
+      unsubRefs.current.push(unsubReq);
+
+      const unsubTx = subscribeTransactions((rows) => setAdminRecentTx(rows));
+      unsubRefs.current.push(unsubTx);
+
+      const unsubReturns = subscribeReturnApprovals((rows) => setAdminReturnApprovals(rows));
+      unsubRefs.current.push(unsubReturns);
+
+      // Subscribe to all notifications for Admin
+      const unsubNotif = subscribeNotifications(null, (rows) => setNotifications(rows));
+      unsubRefs.current.push(unsubNotif);
+    }
+  }
+
+  // Recompute admin KPIs whenever equipment changes
+  useEffect(() => {
+    if (userRole !== 'Admin' || adminEquipment.length === 0) return;
+    const total     = adminEquipment.reduce((s, e) => s + (Number(e.total) || 0), 0);
+    const available = adminEquipment.reduce((s, e) => s + (Number(e.available) || 0), 0);
+    setAdminKpis({
+      totalEquipment: total,
+      available,
+      borrowed: total - available,
+      overdue: adminEquipment.filter((e) => e.status === 'Overdue').length,
+    });
+  }, [adminEquipment, userRole]);
+
+  // ── Login callback (called by LoginScreen after Firebase Auth succeeds) ───────
+  const handleLogin = async ({ role, studentId, uid, email }) => {
+    localStorage.setItem('equiptrace_role', role);
     setUserRole(role);
     setIsLoggedIn(true);
     setCurrentTab('home');
+    triggerToast(role === 'Admin' ? 'Logged in as Admin' : `Welcome, ${studentId}!`);
 
-    if (role === 'Student') {
-      setStudent({
-        ...CURRENT_STUDENT,
-        id: studentId || '2025-001'
+    // Ensure user profile doc exists and records the role
+    if (uid) {
+      await upsertUserProfile(uid, {
+        studentId,
+        email,
+        role,
       });
-      triggerToast(`Welcome Student, ${student.name}!`);
-    } else {
-      triggerToast('Logged in as Admin');
     }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    triggerToast('Logged out successfully');
+  // ── Logout ───────────────────────────────────────────────────────────────────
+  const handleLogout = async () => {
+    clearAllSubs();
+    await signOut(auth);
+    triggerToast('Logged out successfully.');
   };
 
-  // Student Actions
-  const handleScanEquipment = (equipment) => {
-    setScannedEquipment(equipment);
-  };
+  // ── Student: Borrow ──────────────────────────────────────────────────────────
+  const handleScanEquipment = (equipment) => setScannedEquipment(equipment);
 
   const handleConfirmBorrow = async (equipment) => {
-    const newBorrowing = {
-      borrowId: `BORROW-${Math.floor(1000 + Math.random() * 9000)}`,
-      id: equipment.id,
-      name: equipment.name,
-      category: equipment.category,
-      image: equipment.image,
-      location: equipment.location,
+    if (!authUser) return;
+
+    const borrowRecord = {
+      borrowId:    `BORROW-${Math.floor(1000 + Math.random() * 9000)}`,
+      id:          equipment.id,
+      name:        equipment.name,
+      category:    equipment.category,
+      image:       equipment.image || '',
+      location:    equipment.location || '',
       borrowedTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      studentId:   authUser.uid,
+      studentName: student.name,
     };
 
-    // Call API Checkout Endpoint
-    await api.checkoutEquipment({
-      equipmentId: equipment.id,
-      studentId: student.id,
-      studentName: student.name
-    });
+    // Write to Firestore
+    await addBorrowing(borrowRecord);
 
-    setBorrowings([newBorrowing, ...borrowings]);
-    setEquipmentList(equipmentList.map(item =>
-      item.id === equipment.id ? { ...item, available: Math.max(0, item.available - 1) } : item
-    ));
+    // Decrement available count on equipment doc
+    if (equipment.firestoreId) {
+      await updateEquipment(equipment.firestoreId, {
+        available: Math.max(0, (equipment.available || 1) - 1),
+      });
+    }
 
-    setNotifications([
-      {
-        id: Date.now(),
-        title: 'Equipment Borrowed',
-        message: `You borrowed ${equipment.name} (${equipment.id}). Due today at 5:00 PM.`,
-        time: 'Just now',
-        unread: true,
-      },
-      ...notifications
-    ]);
+    // Notification
+    const notifPayload = {
+      studentId: authUser.uid,
+      title:     'Equipment Borrowed',
+      message:   `You borrowed ${equipment.name} (${equipment.id}). Due today at 5:00 PM.`,
+      time:      'Just now',
+    };
+    await addNotification(notifPayload);
+
+    // Trigger Phone Status Bar Push Banner
+    triggerPushBanner(notifPayload);
 
     setScannedEquipment(null);
     setShowBrowse(false);
     setCurrentTab('borrowings');
-
-    try {
-      confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } });
-    } catch (e) {}
-
+    try { confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } }); } catch (e) {}
     triggerToast(`Successfully borrowed ${equipment.name}!`);
   };
 
+  // ── Student: Submit Return (enters 'Return Pending') ────────────────────────
   const handleReturnEquipment = async (borrowId) => {
-    const itemToReturn = borrowings.find(b => b.borrowId === borrowId);
-    if (!itemToReturn) return;
+    const item = borrowings.find((b) => b.borrowId === borrowId);
+    if (!item) return;
 
-    // Call API Return Endpoint
-    await api.returnEquipment(borrowId);
+    // Enter Return Pending status in Firestore
+    await submitReturnPending(item);
 
-    setBorrowings(borrowings.filter(b => b.borrowId !== borrowId));
-    setEquipmentList(equipmentList.map(item =>
-      item.id === itemToReturn.id ? { ...item, available: item.available + 1 } : item
-    ));
-
-    const historyItem = {
-      id: `HIST-${Math.floor(1000 + Math.random() * 9000)}`,
-      equipmentId: itemToReturn.id,
-      name: itemToReturn.name,
-      borrowedDate: 'Today',
-      returnedDate: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'Returned on time',
-      category: itemToReturn.category,
+    const pendingNotif = {
+      studentId: authUser.uid,
+      title: 'Return Submitted',
+      message: `You handed in ${item.name}. Status is now "Return Pending" awaiting admin physical inspection.`,
+      time: 'Just now',
     };
-    setHistory([historyItem, ...history]);
+    await addNotification(pendingNotif);
+    triggerPushBanner(pendingNotif);
 
-    triggerToast(`Returned ${itemToReturn.name}. Thank you!`);
+    triggerToast(`Submitted return for ${item.name}. Awaiting admin approval.`);
   };
 
-  // Admin Actions
+  // ── Admin: Return Approval Workflow Handlers ──────────────────────────────────
+  const handleApproveReturn = async (approvalData) => {
+    const adminName = student?.name || authUser?.displayName || authUser?.email?.split('@')[0] || 'Administrator';
+    const adminUid = authUser?.uid || '';
+
+    await approveReturnSubmission({
+      ...approvalData,
+      adminName,
+      adminUid,
+    });
+
+    triggerToast(`Approved return of ${approvalData.equipmentName} (${approvalData.condition})`);
+  };
+
+  const handleFlagInspection = async (flagData) => {
+    const adminName = student?.name || authUser?.displayName || authUser?.email?.split('@')[0] || 'Administrator';
+    const adminUid = authUser?.uid || '';
+
+    await flagReturnForInspection({
+      ...flagData,
+      adminName,
+      adminUid,
+    });
+
+    triggerToast(`Held ${flagData.equipmentName || 'item'} for physical inspection`);
+  };
+
+  // ── Admin: Approve ────────────────────────────────────────────────────────────
   const handleApproveAdminRequest = async (reqId) => {
-    await api.handleRequestAction(reqId, 'approve');
+    const req = adminRequests.find((r) => r.id === reqId || r.firestoreId === reqId);
+    if (!req) return;
 
-    setAdminRequests(adminRequests.map(req =>
-      req.id === reqId ? { ...req, status: 'Approved' } : req
-    ));
+    const fsId = req.firestoreId;
+    if (fsId) await updateRequest(fsId, { status: 'Approved' });
 
-    setAdminKpis(prev => ({
-      ...prev,
-      available: prev.available - 1,
-      borrowed: prev.borrowed + 1
-    }));
+    const today = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
+    await addTransaction({
+      id:               `TX-${Date.now()}`,
+      studentName:      req.studentName,
+      studentInitials:  req.studentInitials || req.studentName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase(),
+      equipment:        `${req.equipmentName} ${req.equipmentCode}`,
+      date:             today,
+      status:           'Borrowed',
+    });
 
-    triggerToast('Request Approved successfully');
+    // Decrement equipment available
+    const eq = adminEquipment.find((e) => e.id === req.equipmentId);
+    if (eq?.firestoreId) {
+      await updateEquipment(eq.firestoreId, { available: Math.max(0, (eq.available || 0) - 1) });
+    }
+
+    triggerToast(`Request for ${req.equipmentName} Approved`);
   };
 
+  // ── Admin: Reject ─────────────────────────────────────────────────────────────
   const handleRejectAdminRequest = async (reqId) => {
-    await api.handleRequestAction(reqId, 'reject');
+    const req = adminRequests.find((r) => r.id === reqId || r.firestoreId === reqId);
+    if (!req) return;
 
-    setAdminRequests(adminRequests.map(req =>
-      req.id === reqId ? { ...req, status: 'Rejected' } : req
-    ));
+    const fsId = req.firestoreId;
+    if (fsId) await updateRequest(fsId, { status: 'Rejected' });
 
-    triggerToast('Request Rejected');
+    const today = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
+    await addTransaction({
+      id:               `TX-${Date.now()}`,
+      studentName:      req.studentName,
+      studentInitials:  req.studentInitials || req.studentName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase(),
+      equipment:        `${req.equipmentName} ${req.equipmentCode}`,
+      date:             today,
+      status:           'Rejected',
+    });
+
+    triggerToast(`Request for ${req.equipmentName} Rejected`);
   };
 
+  // ── Admin: Add Equipment ──────────────────────────────────────────────────────
   const handleAddAdminEquipment = async (newItem) => {
-    await api.addEquipment(newItem);
-
-    setAdminEquipment([newItem, ...adminEquipment]);
-    setAdminKpis(prev => ({
-      ...prev,
-      totalEquipment: prev.totalEquipment + 1,
-      available: prev.available + 1
-    }));
+    await fsAddEquipment(newItem);
     triggerToast(`Added ${newItem.name} to inventory!`);
   };
 
-  const pendingRequestsCount = adminRequests.filter(r => r.status === 'Pending').length;
+  // ── Derived Admin Notifications ──────────────────────────────────────────────
+  const adminDerivedNotifications = React.useMemo(() => {
+    if (userRole !== 'Admin') return [];
+
+    const list = [];
+
+    // 1. Pending borrow requests
+    adminRequests
+      .filter((r) => r.status === 'Pending')
+      .forEach((r) => {
+        const notifId = `req-${r.id || r.firestoreId}`;
+        list.push({
+          id: notifId,
+          firestoreId: r.firestoreId,
+          title: 'New Borrow Request',
+          message: `${r.studentName || 'Student'} requested ${r.equipmentName || 'equipment'} (${r.equipmentCode || r.equipmentId || ''})`,
+          time: r.date || 'Pending',
+          unread: !adminDismissedReadIds.has(notifId),
+          category: 'request',
+        });
+      });
+
+    // 2. Returns awaiting inspection
+    adminReturnApprovals
+      .filter((ret) => ret.status === 'Return Pending' || ret.status === 'Needs Inspection')
+      .forEach((ret) => {
+        const notifId = `ret-${ret.id || ret.firestoreId}`;
+        list.push({
+          id: notifId,
+          firestoreId: ret.firestoreId,
+          title: ret.status === 'Needs Inspection' ? 'Return Flagged for Review' : 'Return Awaiting Approval',
+          message: `${ret.studentName || 'Student'} returned ${ret.equipmentName || 'equipment'} (${ret.equipmentId || ''})${ret.status === 'Needs Inspection' ? ' - condition flagged' : ' - awaiting physical inspection'}`,
+          time: ret.returnSubmittedTime || 'Pending',
+          unread: !adminDismissedReadIds.has(notifId),
+          category: 'return',
+        });
+      });
+
+    // 3. Low stock inventory warnings
+    adminEquipment
+      .filter((eq) => Number(eq.available) === 0)
+      .forEach((eq) => {
+        const notifId = `low-stock-${eq.id || eq.firestoreId}`;
+        list.push({
+          id: notifId,
+          title: 'Out of Stock Alert',
+          message: `${eq.name} (${eq.code || eq.id}) has 0 available units left.`,
+          time: 'Inventory alert',
+          unread: !adminDismissedReadIds.has(notifId),
+          category: 'inventory',
+        });
+      });
+
+    // 4. Any direct Firestore notifications
+    notifications.forEach((n) => {
+      const notifId = n.firestoreId || n.id;
+      if (!list.some((existing) => (existing.firestoreId && existing.firestoreId === n.firestoreId) || existing.id === notifId)) {
+        list.push({
+          ...n,
+          id: notifId,
+          unread: adminDismissedReadIds.has(notifId) ? false : !!n.unread,
+        });
+      }
+    });
+
+    return list;
+  }, [userRole, adminRequests, adminReturnApprovals, adminEquipment, notifications, adminDismissedReadIds]);
+
+  const displayNotifications = userRole === 'Admin' ? adminDerivedNotifications : notifications;
+  const unreadNotifCount = displayNotifications.filter((n) => n.unread).length;
+
+  // ── Notifications: mark read ─────────────────────────────────────────────────
+  const handleClearUnread = async () => {
+    if (userRole === 'Admin') {
+      const allIds = adminDerivedNotifications.map((n) => n.id);
+      setAdminDismissedReadIds((prev) => new Set([...prev, ...allIds]));
+    }
+
+    // 1. Instantly update UI locally
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+    triggerToast('All notifications marked as read');
+
+    // 2. Persist to Firestore for documents that have a firestoreId
+    const unreadIds = displayNotifications
+      .filter((n) => n.unread && n.firestoreId)
+      .map((n) => n.firestoreId);
+
+    if (unreadIds.length > 0) {
+      try {
+        await markNotificationsRead(unreadIds);
+      } catch (err) {
+        console.warn('[Firestore] Error marking notifications as read:', err);
+      }
+    }
+  };
+
+  const handleMarkSingleRead = async (targetId) => {
+    if (userRole === 'Admin') {
+      setAdminDismissedReadIds((prev) => new Set([...prev, targetId]));
+    }
+
+    // 1. Instantly update UI locally
+    setNotifications((prev) =>
+      prev.map((n) => (n.firestoreId === targetId || n.id === targetId ? { ...n, unread: false } : n))
+    );
+
+    // 2. Persist to Firestore if it has a firestoreId
+    const target = displayNotifications.find((n) => n.firestoreId === targetId || n.id === targetId);
+    if (target?.firestoreId) {
+      try {
+        await markNotificationsRead([target.firestoreId]);
+      } catch (err) {
+        console.warn('[Firestore] Error marking single notification as read:', err);
+      }
+    }
+  };
+
+  const pendingRequestsCount = adminRequests.filter((r) => r.status === 'Pending').length;
+  const pendingReturnsCount  = adminReturnApprovals.filter((r) => r.status === 'Return Pending').length;
+
+  // ── Loading splash while Firebase resolves ────────────────────────────────────
+  if (!authReady) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', backgroundColor: '#0F172A', flexDirection: 'column', gap: '16px',
+      }}>
+        <div style={{
+          width: '56px', height: '56px', borderRadius: '50%',
+          backgroundColor: '#1D61E7', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 8px 24px rgba(29,97,231,0.35)',
+        }}>
+          <span style={{ color: '#fff', fontSize: '1.4rem', fontWeight: '800' }}>E</span>
+        </div>
+        <span style={{ color: '#94A3B8', fontSize: '0.9rem', fontWeight: '600' }}>Loading EQUIPTRACE…</span>
+      </div>
+    );
+  }
+
+  const isAnyModalOpen = Boolean(
+    showNotifications || showBrowse || scannedEquipment || showAddEquipmentModal
+  );
+
+  const renderModals = (
+    <>
+      {scannedEquipment && (
+        <EquipmentDetailModal
+          equipment={scannedEquipment}
+          onClose={() => setScannedEquipment(null)}
+          onConfirmBorrow={handleConfirmBorrow}
+        />
+      )}
+      {showBrowse && (
+        <BrowseModal
+          equipmentList={equipmentList}
+          onClose={() => setShowBrowse(false)}
+          onSelectEquipment={(item) => setScannedEquipment(item)}
+        />
+      )}
+      {showAddEquipmentModal && (
+        <AddEquipmentModal
+          onClose={() => setShowAddEquipmentModal(false)}
+          onAddEquipment={handleAddAdminEquipment}
+        />
+      )}
+      {showNotifications && (
+        <NotificationsModal
+          notifications={displayNotifications}
+          onClose={() => setShowNotifications(false)}
+          onClearUnread={handleClearUnread}
+          onMarkSingleRead={handleMarkSingleRead}
+        />
+      )}
+    </>
+  );
 
   return (
     <MobileFrameWrapper
@@ -246,30 +622,30 @@ export default function App() {
       userRole={userRole}
       darkStatusBar={userRole === 'Student' && currentTab === 'scan' && isLoggedIn}
       pendingRequestsCount={pendingRequestsCount}
+      pendingReturnsCount={pendingReturnsCount}
+      activePushBanner={activePushBanner}
+      onDismissPushBanner={() => setActivePushBanner(null)}
+      modals={renderModals}
+      isModalOpen={isAnyModalOpen}
     >
-      {/* Toast Alert */}
+      {/* Toast */}
       {toastMessage && (
-        <div className="toast-container">
-          <span>{toastMessage}</span>
-        </div>
+        <div className="toast-container"><span>{toastMessage}</span></div>
       )}
 
-      {/* Screen Routing */}
       {!isLoggedIn ? (
         <LoginScreen onLogin={handleLogin} />
       ) : userRole === 'Student' ? (
-        /* Student UI Views */
         <>
           {currentTab === 'home' && (
             <HomeScreen
               student={student}
-              unreadCount={notifications.filter(n => n.unread).length}
+              unreadCount={unreadNotifCount}
               onNavigate={(tab) => setCurrentTab(tab)}
               onOpenNotifications={() => setShowNotifications(true)}
               onOpenBrowse={() => setShowBrowse(true)}
             />
           )}
-
           {currentTab === 'scan' && (
             <ScanScreen
               onBack={() => setCurrentTab('home')}
@@ -277,7 +653,6 @@ export default function App() {
               equipmentList={equipmentList}
             />
           )}
-
           {currentTab === 'borrowings' && (
             <BorrowingsScreen
               onBack={() => setCurrentTab('home')}
@@ -286,7 +661,6 @@ export default function App() {
               onReturnEquipment={handleReturnEquipment}
             />
           )}
-
           {currentTab === 'profile' && (
             <ProfileScreen
               student={student}
@@ -296,33 +670,8 @@ export default function App() {
               onLogout={handleLogout}
             />
           )}
-
-          {scannedEquipment && (
-            <EquipmentDetailModal
-              equipment={scannedEquipment}
-              onClose={() => setScannedEquipment(null)}
-              onConfirmBorrow={handleConfirmBorrow}
-            />
-          )}
-
-          {showBrowse && (
-            <BrowseModal
-              equipmentList={equipmentList}
-              onClose={() => setShowBrowse(false)}
-              onSelectEquipment={(item) => setScannedEquipment(item)}
-            />
-          )}
-
-          {showNotifications && (
-            <NotificationsModal
-              notifications={notifications}
-              onClose={() => setShowNotifications(false)}
-              onClearUnread={() => setNotifications(notifications.map(n => ({ ...n, unread: false })))}
-            />
-          )}
         </>
       ) : (
-        /* Admin UI Views matching Images 2, 3, 4, 5 */
         <>
           {currentTab === 'home' && (
             <AdminHome
@@ -332,40 +681,59 @@ export default function App() {
               onApproveRequest={handleApproveAdminRequest}
               onRejectRequest={handleRejectAdminRequest}
               onNavigateTab={(tab) => setCurrentTab(tab)}
+              onOpenNotifications={() => setShowNotifications(true)}
+              unreadCount={unreadNotifCount}
             />
           )}
-
           {currentTab === 'equipment' && (
             <AdminEquipment
               equipmentList={adminEquipment}
               onOpenAddModal={() => setShowAddEquipmentModal(true)}
+              onOpenNotifications={() => setShowNotifications(true)}
+              unreadCount={unreadNotifCount}
             />
           )}
-
           {currentTab === 'requests' && (
             <AdminRequests
               requests={adminRequests}
               onApproveRequest={handleApproveAdminRequest}
               onRejectRequest={handleRejectAdminRequest}
+              onOpenNotifications={() => setShowNotifications(true)}
+              unreadCount={unreadNotifCount}
             />
           )}
-
+          {currentTab === 'return-approval' && (
+            <AdminReturnApproval
+              returnApprovals={adminReturnApprovals}
+              borrowings={borrowings}
+              equipmentList={adminEquipment.length > 0 ? adminEquipment : equipmentList}
+              onApproveReturn={handleApproveReturn}
+              onFlagInspection={handleFlagInspection}
+              adminUser={authUser}
+              onOpenNotifications={() => setShowNotifications(true)}
+              unreadCount={unreadNotifCount}
+            />
+          )}
           {currentTab === 'analytics' && (
             <AdminAnalytics
               kpis={adminKpis}
               equipmentList={adminEquipment}
               transactions={adminRecentTx}
+              onOpenNotifications={() => setShowNotifications(true)}
+              unreadCount={unreadNotifCount}
             />
           )}
-
           {currentTab === 'more' && (
-            <AdminMore onLogout={handleLogout} />
-          )}
-
-          {showAddEquipmentModal && (
-            <AddEquipmentModal
-              onClose={() => setShowAddEquipmentModal(false)}
-              onAddEquipment={handleAddAdminEquipment}
+            <AdminMore
+              onLogout={handleLogout}
+              onBack={() => setCurrentTab('home')}
+              onNavigate={(tab) => setCurrentTab(tab)}
+              transactions={adminRecentTx}
+              notifications={displayNotifications}
+              onClearUnread={handleClearUnread}
+              onSendTestNotification={triggerPushBanner}
+              student={student}
+              user={authUser}
             />
           )}
         </>

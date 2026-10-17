@@ -13,17 +13,25 @@ import {
   Package,
   ListFilter,
   BarChart3,
-  MoreHorizontal
+  MoreHorizontal,
+  Bell,
+  RotateCcw,
+  Clock
 } from 'lucide-react';
 
 export default function MobileFrameWrapper({
   children,
+  modals = null,
+  isModalOpen = false,
   currentTab,
   onNavigate,
   showBottomNav = true,
   userRole = 'Student',
   darkStatusBar = false,
-  pendingRequestsCount = 2
+  pendingRequestsCount = 0,
+  pendingReturnsCount = 0,
+  activePushBanner = null,
+  onDismissPushBanner,
 }) {
   const [currentTime, setCurrentTime] = useState('9:41');
   const [isFullView, setIsFullView] = useState(false);
@@ -61,7 +69,20 @@ export default function MobileFrameWrapper({
       <div className={`mobile-device-shell ${isFullView ? 'full-view' : ''}`}>
         {/* Status Bar */}
         <div className={`status-bar ${darkStatusBar ? 'dark-theme' : ''}`}>
-          <span>{currentTime}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>{currentTime}</span>
+            {activePushBanner && (
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#1D61E7',
+                  display: 'inline-block',
+                }}
+              />
+            )}
+          </div>
           <div className="status-bar-icons">
             <Signal size={14} strokeWidth={2.5} />
             <Wifi size={14} strokeWidth={2.5} />
@@ -69,147 +90,234 @@ export default function MobileFrameWrapper({
           </div>
         </div>
 
+        {/* ── Slide-down Phone Notification Banner ── */}
+        {activePushBanner && (
+          <div
+            onClick={onDismissPushBanner}
+            style={{
+              position: 'absolute',
+              top: '42px',
+              left: '12px',
+              right: '12px',
+              zIndex: 120,
+              backgroundColor: 'rgba(15, 23, 42, 0.94)',
+              color: '#FFFFFF',
+              borderRadius: '16px',
+              padding: '12px 14px',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px',
+              backdropFilter: 'blur(10px)',
+              cursor: 'pointer',
+              border: '1px solid rgba(255,255,255,0.12)',
+              animation: 'slideDownBanner 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          >
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                backgroundColor: '#1D61E7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                marginTop: '1px',
+              }}
+            >
+              <Bell size={18} color="#FFFFFF" strokeWidth={2.5} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#93C5FD', letterSpacing: '0.3px', textTransform: 'uppercase' }}>
+                  EQUIPTRACE
+                </span>
+                <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>now</span>
+              </div>
+              <h5 style={{ fontSize: '0.86rem', fontWeight: '800', color: '#FFFFFF', margin: 0, lineHeight: '1.2' }}>
+                {activePushBanner.title}
+              </h5>
+              <p style={{ fontSize: '0.76rem', color: '#CBD5E1', margin: '3px 0 0 0', lineHeight: '1.3' }}>
+                {activePushBanner.message}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Content Container */}
-        <div className="screen-container">
+        <div
+          className={`screen-container ${showBottomNav ? 'has-floating-nav' : ''} ${isModalOpen ? 'modal-open' : ''}`}
+          style={isModalOpen ? { overflow: 'hidden' } : {}}
+        >
           {children}
         </div>
 
-        {/* Bottom Navigation Bar */}
+        {/* Floating Pill Navigation Bar (Matching Pic 2) */}
         {showBottomNav && (
-          <div className="bottom-nav" style={{ height: '76px', paddingBottom: '8px' }}>
+          <nav className="bottom-nav-floating" aria-label="Main Navigation">
             {userRole === 'Student' ? (
               /* Student Navigation Bar */
               <>
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'home' ? 'active' : ''}`}
+                  title="Home"
+                  className={`floating-nav-btn ${currentTab === 'home' ? 'active' : ''}`}
                   onClick={() => onNavigate('home')}
+                  style={{ flex: 1, maxWidth: '72px' }}
                 >
                   <Home size={22} strokeWidth={currentTab === 'home' ? 2.5 : 2} />
-                  <span>Home</span>
                 </button>
 
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'scan' ? 'active' : ''}`}
+                  title="Scan QR"
+                  className={`floating-nav-btn ${currentTab === 'scan' ? 'active' : ''}`}
                   onClick={() => onNavigate('scan')}
+                  style={{ flex: 1, maxWidth: '72px' }}
                 >
                   <Scan size={22} strokeWidth={currentTab === 'scan' ? 2.5 : 2} />
-                  <span>Scan</span>
                 </button>
 
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'borrowings' ? 'active' : ''}`}
+                  title="Borrowings"
+                  className={`floating-nav-btn ${currentTab === 'borrowings' ? 'active' : ''}`}
                   onClick={() => onNavigate('borrowings')}
+                  style={{ flex: 1, maxWidth: '72px' }}
                 >
-                  <FileText size={22} strokeWidth={currentTab === 'borrowings' ? 2.5 : 2} />
-                  <span>Borrowings</span>
+                  <Clock size={22} strokeWidth={currentTab === 'borrowings' ? 2.5 : 2} />
                 </button>
 
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'profile' ? 'active' : ''}`}
+                  title="Profile"
+                  className={`floating-nav-btn ${currentTab === 'profile' ? 'active' : ''}`}
                   onClick={() => onNavigate('profile')}
+                  style={{ flex: 1, maxWidth: '72px' }}
                 >
                   <User size={22} strokeWidth={currentTab === 'profile' ? 2.5 : 2} />
-                  <span>Profile</span>
                 </button>
               </>
             ) : (
-              /* Admin Navigation Bar matching Images 2, 3, 4, 5 */
+              /* Admin Navigation Bar matching Pic 2 */
               <>
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'home' ? 'active' : ''}`}
+                  title="Overview"
+                  className={`floating-nav-btn ${currentTab === 'home' ? 'active' : ''}`}
                   onClick={() => onNavigate('home')}
-                  style={{ width: '20%' }}
+                  style={{ flex: 1, maxWidth: '54px' }}
                 >
-                  <LayoutGrid size={22} strokeWidth={currentTab === 'home' ? 2.5 : 2} />
-                  <span>Home</span>
+                  <LayoutGrid size={20} strokeWidth={currentTab === 'home' ? 2.5 : 2} />
                 </button>
 
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'equipment' ? 'active' : ''}`}
+                  title="Equipment Inventory"
+                  className={`floating-nav-btn ${currentTab === 'equipment' ? 'active' : ''}`}
                   onClick={() => onNavigate('equipment')}
-                  style={{ width: '20%' }}
+                  style={{ flex: 1, maxWidth: '54px' }}
                 >
-                  <Package size={22} strokeWidth={currentTab === 'equipment' ? 2.5 : 2} />
-                  <span>Equipment</span>
+                  <Package size={20} strokeWidth={currentTab === 'equipment' ? 2.5 : 2} />
                 </button>
 
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'requests' ? 'active' : ''}`}
+                  title="Borrow Requests"
+                  className={`floating-nav-btn ${currentTab === 'requests' ? 'active' : ''}`}
                   onClick={() => onNavigate('requests')}
-                  style={{ width: '20%', position: 'relative' }}
+                  style={{ flex: 1, maxWidth: '54px', position: 'relative' }}
                 >
-                  <ListFilter size={22} strokeWidth={currentTab === 'requests' ? 2.5 : 2} />
-                  <span>Requests</span>
+                  <ListFilter size={20} strokeWidth={currentTab === 'requests' ? 2.5 : 2} />
                   {pendingRequestsCount > 0 && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '2px',
-                      right: '18px',
-                      backgroundColor: '#EF4444',
-                      color: '#FFFFFF',
-                      fontSize: '0.65rem',
-                      fontWeight: '800',
-                      width: '16px',
-                      height: '16px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '2px solid #FFFFFF'
-                    }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '6px',
+                        backgroundColor: '#EF4444',
+                        color: '#FFFFFF',
+                        fontSize: '0.62rem',
+                        fontWeight: '800',
+                        minWidth: '16px',
+                        height: '16px',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 3px',
+                        border: '2px solid #FFFFFF',
+                        boxShadow: '0 2px 4px rgba(239, 68, 68, 0.4)',
+                      }}
+                    >
                       {pendingRequestsCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Return Approval Tab (Directly on Admin Nav Bar) */}
+                <button
+                  type="button"
+                  title="Return Approval"
+                  className={`floating-nav-btn ${currentTab === 'return-approval' ? 'active' : ''}`}
+                  onClick={() => onNavigate('return-approval')}
+                  style={{ flex: 1, maxWidth: '54px', position: 'relative' }}
+                >
+                  <RotateCcw size={20} strokeWidth={currentTab === 'return-approval' ? 2.5 : 2} />
+                  {pendingReturnsCount > 0 && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '6px',
+                        backgroundColor: '#EF4444',
+                        color: '#FFFFFF',
+                        fontSize: '0.62rem',
+                        fontWeight: '800',
+                        minWidth: '16px',
+                        height: '16px',
+                        borderRadius: '9999px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 3px',
+                        border: '2px solid #FFFFFF',
+                        boxShadow: '0 2px 4px rgba(239, 68, 68, 0.4)',
+                      }}
+                    >
+                      {pendingReturnsCount}
                     </span>
                   )}
                 </button>
 
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'analytics' ? 'active' : ''}`}
+                  title="Analytics"
+                  className={`floating-nav-btn ${currentTab === 'analytics' ? 'active' : ''}`}
                   onClick={() => onNavigate('analytics')}
-                  style={{ width: '20%' }}
+                  style={{ flex: 1, maxWidth: '54px' }}
                 >
-                  <BarChart3 size={22} strokeWidth={currentTab === 'analytics' ? 2.5 : 2} />
-                  <span>Analytics</span>
+                  <BarChart3 size={20} strokeWidth={currentTab === 'analytics' ? 2.5 : 2} />
                 </button>
 
                 <button
                   type="button"
-                  className={`bottom-nav-item ${currentTab === 'more' ? 'active' : ''}`}
+                  title="Settings & More"
+                  className={`floating-nav-btn ${currentTab === 'more' ? 'active' : ''}`}
                   onClick={() => onNavigate('more')}
-                  style={{ width: '20%', position: 'relative' }}
+                  style={{ flex: 1, maxWidth: '54px' }}
                 >
-                  <MoreHorizontal size={22} strokeWidth={currentTab === 'more' ? 2.5 : 2} />
-                  <span>More</span>
-                  <span style={{
-                    position: 'absolute',
-                    top: '2px',
-                    right: '18px',
-                    backgroundColor: '#EF4444',
-                    color: '#FFFFFF',
-                    fontSize: '0.65rem',
-                    fontWeight: '800',
-                    width: '16px',
-                    height: '16px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: '2px solid #FFFFFF'
-                  }}>
-                    1
-                  </span>
+                  <MoreHorizontal size={20} strokeWidth={currentTab === 'more' ? 2.5 : 2} />
                 </button>
               </>
             )}
-          </div>
+          </nav>
         )}
+
+        {/* ── Modals & Overlays (Pinned to device shell, immune to inner page scrolling) ── */}
+        {modals}
       </div>
     </div>
   );

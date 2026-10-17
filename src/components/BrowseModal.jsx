@@ -5,7 +5,7 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const categories = ['All', 'PE & Sports', 'Tech & AV', 'Laboratory'];
+  const categories = ['All', 'PE & Sports'];
 
   const filteredItems = equipmentList.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -16,29 +16,41 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
   });
 
   return (
-    <div style={{
-      position: 'absolute',
-      inset: 0,
-      backgroundColor: 'rgba(15, 30, 54, 0.65)',
-      zIndex: 90,
-      display: 'flex',
-      alignItems: 'flex-end',
-      justifyContent: 'center',
-      backdropFilter: 'blur(4px)',
-      animation: 'fadeIn 0.2s ease'
-    }}>
-      <div style={{
-        backgroundColor: '#FFFFFF',
-        width: '100%',
-        height: '92%',
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
-        padding: '24px 20px 20px 20px',
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) onClose();
+      }}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: 'rgba(15, 30, 54, 0.65)',
+        zIndex: 100,
         display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        boxShadow: '0 -10px 30px rgba(0,0,0,0.2)'
-      }}>
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeIn 0.2s ease',
+        overscrollBehavior: 'contain',
+        touchAction: 'none',
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: '#FFFFFF',
+          width: '100%',
+          height: '92%',
+          borderTopLeftRadius: '24px',
+          borderTopRightRadius: '24px',
+          padding: '24px 20px 20px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          boxShadow: '0 -10px 30px rgba(0,0,0,0.2)',
+          overscrollBehavior: 'contain',
+          touchAction: 'auto',
+        }}
+      >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -101,12 +113,14 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
         </div>
 
         {/* Category Pills */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          overflowX: 'auto',
-          paddingBottom: '4px'
-        }}>
+        <div 
+          className="hover-scroll-container"
+          onWheel={(e) => {
+            if (e.deltaY !== 0) {
+              e.currentTarget.scrollLeft += e.deltaY * 0.7;
+            }
+          }}
+        >
           {categories.map((cat) => (
             <button
               key={cat}

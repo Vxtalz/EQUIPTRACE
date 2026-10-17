@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, MoreVertical, Zap, Image as ImageIcon, Camera, RefreshCw } from 'lucide-react';
+import { ArrowLeft, MoreVertical, Image as ImageIcon, Camera, RefreshCw } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 export default function ScanScreen({ onBack, onScanEquipment, equipmentList = [] }) {
-  const [typedId, setTypedId] = useState('');
-  const [flashOn, setFlashOn] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
@@ -62,8 +60,17 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
       // plain text ID
     }
 
+    // Normalize any Unicode en-dash (\u2013), em-dash (\u2014), figure dash (\u2012) into standard ASCII hyphen
+    const cleanId = (str) =>
+      (str || '')
+        .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g, '-')
+        .replace(/\s+/g, '')
+        .toUpperCase();
+
+    const normalizedTarget = cleanId(targetId);
+
     const matchedItem = equipmentList.find(
-      (eq) => eq.id.toUpperCase() === targetId.toUpperCase()
+      (eq) => cleanId(eq.id) === normalizedTarget || cleanId(eq.code) === normalizedTarget
     );
 
     if (matchedItem) {
@@ -102,8 +109,6 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
 
   const handleTypedFind = (e) => {
     e.preventDefault();
-    if (!typedId.trim()) return;
-    handleSimulateScan(typedId.trim());
   };
 
   return (
@@ -272,16 +277,6 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
             zIndex: 10
           }} />
 
-          {/* Flash Effect Light Overlay */}
-          {flashOn && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.25)',
-              pointerEvents: 'none',
-              zIndex: 12
-            }} />
-          )}
 
           {/* Animated Scanner Laser */}
           <div className="scanner-line" style={{ zIndex: 11 }} />
@@ -305,55 +300,6 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
         )}
       </div>
 
-      {/* Action Controls & Manual Input */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* Manual ID Input */}
-        <form onSubmit={handleTypedFind} style={{
-          display: 'flex',
-          backgroundColor: '#1A202C',
-          borderRadius: '14px',
-          padding: '4px',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          alignItems: 'center'
-        }}>
-          <input
-            type="text"
-            value={typedId}
-            onChange={(e) => setTypedId(e.target.value)}
-            placeholder="Search equipment by ID (e.g. PE-015)"
-            style={{
-              flex: 1,
-              backgroundColor: '#FFFFFF',
-              color: '#0F1E36',
-              border: 'none',
-              height: '46px',
-              borderRadius: '10px',
-              padding: '0 14px',
-              fontSize: '0.9rem',
-              outline: 'none',
-              fontFamily: 'inherit'
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              backgroundColor: '#1D61E7',
-              color: '#FFFFFF',
-              border: 'none',
-              padding: '0 20px',
-              height: '46px',
-              borderRadius: '10px',
-              fontWeight: '700',
-              fontSize: '0.9rem',
-              marginLeft: '6px',
-              cursor: 'pointer',
-              fontFamily: 'inherit'
-            }}
-          >
-            Find
-          </button>
-        </form>
-
         {/* Hidden file input for Gallery QR Code scan */}
         <input
           ref={fileInputRef}
@@ -363,34 +309,13 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
           onChange={handleFileUpload}
         />
 
-        {/* Bottom Flash / Gallery buttons */}
+        {/* Bottom Gallery button (centered) */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-around',
+          justifyContent: 'center',
           marginTop: '6px',
           paddingTop: '6px'
         }}>
-          <button
-            type="button"
-            onClick={() => setFlashOn(!flashOn)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: flashOn ? '#38BDF8' : '#94A3B8',
-              cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '0.8rem',
-              fontWeight: '600',
-              fontFamily: 'inherit'
-            }}
-          >
-            <Zap size={22} strokeWidth={2.2} />
-            <span>Flash</span>
-          </button>
-
           <button
             type="button"
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
@@ -412,7 +337,6 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
             <span>Gallery</span>
           </button>
         </div>
-      </div>
     </div>
   );
 }
