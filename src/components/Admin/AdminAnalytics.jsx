@@ -270,9 +270,9 @@ export default function AdminAnalytics({
           {/* Item 3 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#94A3B8', width: '12px' }}>3</span>
-            <span style={{ fontSize: '1.2rem' }}>📽️</span>
+            <span style={{ fontSize: '1.2rem' }}>🏓</span>
             <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0F1E36', width: '100px' }}>
-              Projector
+              Table Tennis
             </span>
             <div style={{ flex: 1, height: '8px', borderRadius: '9999px', backgroundColor: '#F1F5F9', overflow: 'hidden' }}>
               <div style={{ width: '40%', height: '100%', backgroundColor: '#1D61E7', borderRadius: '9999px' }} />
