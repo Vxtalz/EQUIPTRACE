@@ -145,20 +145,30 @@ export default function App() {
 
             if (profile) {
               setStudent({
-                id: profile.studentId || user.email?.split('@')[0] || '',
-                name: profile.name || user.displayName || user.email?.split('@')[0] || '',
+                id: profile.studentId || user.email?.split('@')[0] || '2025-001',
+                name: profile.name || user.displayName || profile.studentId || user.email?.split('@')[0] || 'Student',
                 course: profile.course || 'BS Physical Education',
                 yearLevel: profile.yearLevel || '3rd Year',
                 email: user.email,
               });
             } else {
-              const fallbackId = user.email?.split('@')[0] || '';
-              setStudent((prev) => ({ ...prev, id: fallbackId, email: user.email }));
+              const fallbackId = user.email?.split('@')[0] || '2025-001';
+              setStudent((prev) => ({
+                ...prev,
+                id: fallbackId,
+                name: prev.name && prev.name !== 'Juan Dela Cruz' ? prev.name : fallbackId,
+                email: user.email,
+              }));
             }
           } catch (e) {
             console.warn('[Firestore] Profile fetch skipped or timed out:', e.message);
-            const fallbackId = user.email?.split('@')[0] || '';
-            setStudent((prev) => ({ ...prev, id: fallbackId, email: user.email }));
+            const fallbackId = user.email?.split('@')[0] || '2025-001';
+            setStudent((prev) => ({
+              ...prev,
+              id: fallbackId,
+              name: prev.name && prev.name !== 'Juan Dela Cruz' ? prev.name : fallbackId,
+              email: user.email,
+            }));
           }
 
           attachFirestoreListeners(user, userRoleResolved);
@@ -273,10 +283,18 @@ export default function App() {
     setCurrentTab('home');
     triggerToast(role === 'Admin' ? 'Logged in as Admin' : `Welcome, ${studentId}!`);
 
+    setStudent((prev) => ({
+      ...prev,
+      id: studentId || prev.id,
+      name: studentId || prev.name,
+      email: email || prev.email,
+    }));
+
     // Ensure user profile doc exists and records the role
     if (uid) {
       await upsertUserProfile(uid, {
         studentId,
+        name: studentId,
         email,
         role,
       });

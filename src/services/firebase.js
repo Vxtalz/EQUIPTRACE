@@ -29,13 +29,13 @@ import {
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 const firebaseConfig = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDRBbSAjN429QMjsSOc11eIXD9iTczYa-g",
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "equiptrace-41dc4.firebaseapp.com",
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID || "equiptrace-41dc4",
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "equiptrace-41dc4.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "342107433590",
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID || "1:342107433590:web:1e07878e39e206e9edcd57",
+  measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-RWTNM2S3N8",
 };
 
 const app = initializeApp(firebaseConfig);
