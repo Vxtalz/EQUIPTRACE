@@ -21,6 +21,7 @@ import equiptraceLogo from '../../assets/equiptrace-logo.png';
 export default function AdminReturnApproval({
   returnApprovals = [],
   borrowings = [],
+  adminRequests = [],
   equipmentList = [],
   onApproveReturn,
   onFlagInspection,
@@ -41,20 +42,57 @@ export default function AdminReturnApproval({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmActionType, setConfirmActionType] = useState('approve'); // 'approve' | 'flag'
 
-  // Merge active borrowings with status 'Active' / 'Borrowed' as 'Borrowed' view
-  const activeBorrowedItems = borrowings
+  // Merge active borrowings from borrowings collection + any active approved requests
+  const activeBorrowedItems = [];
+  const seenIds = new Set();
+
+  borrowings
     .filter((b) => b.status === 'Active' || b.status === 'Borrowed' || !b.status)
-    .map((b) => ({
-      ...b,
-      id: b.borrowId || b.id,
-      borrowingDocId: b.firestoreId || '',
-      equipmentId: b.id,
-      equipmentName: b.name,
-      status: 'Borrowed',
-      returnSubmittedTime: 'With student',
-      returnSubmittedDate: b.borrowedTime || 'Active',
-      condition: 'In Use',
-    }));
+    .forEach((b) => {
+      const bKey = b.borrowId || b.id || b.firestoreId;
+      seenIds.add(bKey);
+      seenIds.add(b.id);
+      activeBorrowedItems.push({
+        ...b,
+        id: b.borrowId || b.id,
+        borrowingDocId: b.firestoreId || '',
+        equipmentId: b.id,
+        equipmentName: b.name,
+        studentName: b.studentName || 'Student',
+        studentId: b.studentId || '2025-001',
+        status: 'Borrowed',
+        returnSubmittedTime: 'With student',
+        returnSubmittedDate: b.borrowedTime || 'Active',
+        condition: 'In Use',
+      });
+    });
+
+  // Also include any approved requests from requests queue that haven't been returned yet
+  adminRequests
+    .filter((r) => r.status === 'Approved')
+    .forEach((r) => {
+      const rKey = r.borrowId || r.id || r.firestoreId;
+      const alreadyReturned = returnApprovals.some(
+        (ret) => ret.borrowId === r.borrowId || (r.borrowingDocId && ret.borrowingDocId === r.borrowingDocId)
+      );
+      if (!seenIds.has(rKey) && !alreadyReturned) {
+        seenIds.add(rKey);
+        activeBorrowedItems.push({
+          id: r.borrowId || r.id,
+          borrowId: r.borrowId || r.id,
+          borrowingDocId: r.borrowingDocId || '',
+          equipmentId: r.equipmentId || r.equipmentCode?.replace('#', '') || 'PE-023',
+          equipmentName: r.equipmentName,
+          category: r.category || 'PE & Sports',
+          studentId: r.studentId || r.studentUid || '2025-001',
+          studentName: r.studentName || 'Student',
+          status: 'Borrowed',
+          returnSubmittedTime: 'With student',
+          returnSubmittedDate: r.requestedDate || 'Active',
+          condition: 'In Use',
+        });
+      }
+    });
 
   const allItems = [...returnApprovals, ...activeBorrowedItems];
 

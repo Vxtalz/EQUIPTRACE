@@ -473,13 +473,42 @@ export default function App() {
     const fsId = req.firestoreId;
     if (fsId) await updateRequest(fsId, { status: 'Approved' });
 
-    // 1. Activate the student's active borrowing
+    // 1. Activate or create the student's active borrowing
+    let borrowingUpdated = false;
     if (req.borrowingDocId) {
-      await updateBorrowing(req.borrowingDocId, { status: 'Active' });
+      try {
+        await updateBorrowing(req.borrowingDocId, { status: 'Active' });
+        borrowingUpdated = true;
+      } catch (e) {
+        console.warn('Could not update borrowing doc:', e.message);
+      }
     } else if (req.borrowId) {
       const match = borrowings.find((b) => b.borrowId === req.borrowId);
       if (match?.firestoreId) {
-        await updateBorrowing(match.firestoreId, { status: 'Active' });
+        try {
+          await updateBorrowing(match.firestoreId, { status: 'Active' });
+          borrowingUpdated = true;
+        } catch (e) {
+          console.warn('Could not update matching borrowing doc:', e.message);
+        }
+      }
+    }
+
+    // If no existing borrowing document was linked or updated, create one in Firestore now!
+    if (!borrowingUpdated) {
+      const newBorrowId = req.borrowId || `BORROW-${Math.floor(1000 + Math.random() * 9000)}`;
+      const newDocId = await addBorrowing({
+        borrowId:     newBorrowId,
+        id:           req.equipmentId || req.equipmentCode?.replace('#', '') || 'PE-023',
+        name:         req.equipmentName,
+        category:     req.category || 'PE & Sports',
+        studentId:    req.studentUid || req.studentId || '2025-001',
+        studentName:  req.studentName || 'Student',
+        borrowedTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status:       'Active',
+      });
+      if (fsId) {
+        await updateRequest(fsId, { borrowingDocId: newDocId, borrowId: newBorrowId });
       }
     }
 
@@ -829,6 +858,7 @@ export default function App() {
             <AdminReturnApproval
               returnApprovals={adminReturnApprovals}
               borrowings={borrowings}
+              adminRequests={adminRequests}
               equipmentList={adminEquipment.length > 0 ? adminEquipment : equipmentList}
               onApproveReturn={handleApproveReturn}
               onFlagInspection={handleFlagInspection}
