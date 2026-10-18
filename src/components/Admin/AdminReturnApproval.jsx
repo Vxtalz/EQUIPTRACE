@@ -372,11 +372,27 @@ export default function AdminReturnApproval({
                   flexDirection: 'column',
                   gap: '12px',
                   position: 'relative',
+                  overflow: 'hidden',
+                  boxSizing: 'border-box',
+                  width: '100%',
                 }}
               >
                 {/* Header Row: Student & Status Badge */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '10px',
+                  width: '100%',
+                  minWidth: 0,
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    minWidth: 0,
+                    flex: 1,
+                  }}>
                     <div
                       style={{
                         width: '38px',
@@ -396,12 +412,31 @@ export default function AdminReturnApproval({
                         ? item.studentName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
                         : 'ST'}
                     </div>
-                    <div>
-                      <h4 style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0F1E36', lineHeight: '1.2' }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <h4 style={{
+                        fontSize: '0.95rem',
+                        fontWeight: '800',
+                        color: '#0F1E36',
+                        lineHeight: '1.2',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        margin: 0,
+                      }}>
                         {item.studentName}
                       </h4>
-                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                        ID: {item.studentId || 'N/A'}
+                      <span style={{
+                        fontSize: '0.75rem',
+                        color: '#64748B',
+                        display: 'block',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        marginTop: '2px',
+                      }}>
+                        ID: {item.studentId?.length > 14 && !item.studentId.includes('-')
+                          ? `${item.studentId.slice(0, 8)}...`
+                          : item.studentId || 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -415,13 +450,15 @@ export default function AdminReturnApproval({
                       border: `1px solid ${badge.border}`,
                       padding: '4px 10px',
                       borderRadius: '9999px',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    <BadgeIcon size={12} strokeWidth={2.5} />
-                    {badge.label}
+                    <BadgeIcon size={12} strokeWidth={2.5} style={{ flexShrink: 0 }} />
+                    <span style={{ whiteSpace: 'nowrap' }}>{badge.label}</span>
                   </span>
                 </div>
 
