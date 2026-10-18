@@ -513,6 +513,7 @@ export default function AdminReturnApproval({
                         ID: {item.studentId?.length > 14 && !item.studentId.includes('-')
                           ? `${item.studentId.slice(0, 8)}...`
                           : item.studentId || 'N/A'}
+                        {(item.studentCourse || item.studentYear) && ` · ${[item.studentCourse, item.studentYear].filter(Boolean).join(' ')}`}
                       </span>
                     </div>
                   </div>
@@ -582,8 +583,8 @@ export default function AdminReturnApproval({
                       <strong style={{ color: '#475569' }}>{item.borrowedTime || 'Today'}</strong>
                     </div>
                     <div>
-                      <span style={{ color: '#94A3B8' }}>Handed in:</span>{' '}
-                      <strong style={{ color: '#0F1E36' }}>{item.returnSubmittedTime || 'Active'}</strong>
+                      <span style={{ color: '#94A3B8' }}>{item.status === 'Borrowed' ? 'Return Due:' : 'Handed in:'}</span>{' '}
+                      <strong style={{ color: '#0F1E36' }}>{item.status === 'Borrowed' ? (item.returnBy || 'Today before 5:00 PM') : (item.returnSubmittedTime || 'Active')}</strong>
                     </div>
                   </div>
 

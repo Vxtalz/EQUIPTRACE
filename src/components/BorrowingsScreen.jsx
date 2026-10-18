@@ -225,7 +225,7 @@ export default function BorrowingsScreen({
                       ? 'Awaiting Admin Approval'
                       : item.status === 'Return Pending'
                       ? 'Handed in · Awaiting Inspection'
-                      : 'Today before 5:00 PM'}
+                      : (item.returnBy || 'Today before 5:00 PM')}
                   </span>
                 </div>
 

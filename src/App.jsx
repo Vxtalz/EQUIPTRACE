@@ -341,49 +341,66 @@ export default function App() {
   // ── Student: Borrow ──────────────────────────────────────────────────────────
   const handleScanEquipment = (equipment) => setScannedEquipment(equipment);
 
-  const handleConfirmBorrow = async (equipment) => {
+  const handleConfirmBorrow = async (equipment, borrowDetails = {}) => {
     if (!authUser) return;
 
     const borrowId = `BORROW-${Math.floor(1000 + Math.random() * 9000)}`;
+    const returnDate = borrowDetails.returnDate || new Date().toISOString().split('T')[0];
+    const returnTime = borrowDetails.returnTime || '17:00';
+    const purpose = borrowDetails.purpose || 'PE Class Activity';
+    const formattedReturnBy = borrowDetails.formattedReturnBy || 'Today, 5:00 PM';
 
     // 1. Create Borrowing record with status 'Pending Approval'
     const borrowRecord = {
       borrowId,
-      id:          equipment.id,
-      name:        equipment.name,
-      category:    equipment.category,
-      image:       equipment.image || '',
-      location:    equipment.location || '',
-      borrowedTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      studentId:   authUser.uid,
-      studentName: student.name || 'Student',
-      status:      'Pending Approval',
+      id:                 equipment.id,
+      name:               equipment.name,
+      category:           equipment.category,
+      image:              equipment.image || '',
+      location:           equipment.location || '',
+      borrowedDate:       new Date().toLocaleDateString(),
+      borrowedTime:       new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      expectedReturnDate: returnDate,
+      expectedReturnTime: returnTime,
+      returnBy:           formattedReturnBy,
+      purpose:            purpose,
+      studentId:          authUser.uid,
+      studentNumber:      student.id || '2025-001',
+      studentName:        student.name || 'Student',
+      studentCourse:      student.course || '',
+      studentYearLevel:   student.yearLevel || '',
+      status:             'Pending Approval',
     };
 
     const borrowingDocId = await addBorrowing(borrowRecord);
 
     // 2. Submit formal Request into the Admin 'requests' collection
     const reqRecord = {
-      id:              `REQ-${Date.now()}`,
-      borrowingDocId:  borrowingDocId || '',
-      borrowId:        borrowId,
-      studentId:       student.id || authUser.email?.split('@')[0] || '2025-001',
-      studentUid:      authUser.uid,
-      studentName:     student.name || 'Student',
-      studentInitials: (student.name || 'Student')
+      id:                 `REQ-${Date.now()}`,
+      borrowingDocId:     borrowingDocId || '',
+      borrowId:           borrowId,
+      studentId:          student.id || authUser.email?.split('@')[0] || '2025-001',
+      studentUid:         authUser.uid,
+      studentName:        student.name || 'Student',
+      studentCourse:      student.course || '',
+      studentYearLevel:   student.yearLevel || '',
+      studentInitials:    (student.name || 'Student')
         .split(' ')
         .map((n) => n[0])
         .join('')
         .slice(0, 2)
         .toUpperCase(),
-      equipmentId:     equipment.id,
-      equipmentDocId:  equipment.firestoreId || '',
-      equipmentName:   equipment.name,
-      equipmentCode:   equipment.code || equipment.id,
-      icon:            equipment.name?.toLowerCase().includes('volley') ? '🏐' : equipment.name?.toLowerCase().includes('basket') ? '🏀' : '⚽',
-      requestedDate:   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      returnBy:        'Today, 5:00 PM',
-      status:          'Pending',
+      equipmentId:        equipment.id,
+      equipmentDocId:     equipment.firestoreId || '',
+      equipmentName:      equipment.name,
+      equipmentCode:      equipment.code || equipment.id,
+      icon:               equipment.name?.toLowerCase().includes('volley') ? '🏐' : equipment.name?.toLowerCase().includes('basket') ? '🏀' : '⚽',
+      requestedDate:      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      expectedReturnDate: returnDate,
+      expectedReturnTime: returnTime,
+      returnBy:           formattedReturnBy,
+      purpose:            purpose,
+      status:             'Pending',
     };
 
     await addRequest(reqRecord);
@@ -392,7 +409,7 @@ export default function App() {
     const notifPayload = {
       studentId: authUser.uid,
       title:     'Borrow Request Submitted',
-      message:   `Your request for ${equipment.name} (${equipment.id}) was sent. Awaiting admin approval.`,
+      message:   `Your request for ${equipment.name} (${equipment.id}) was sent. Due by ${formattedReturnBy}.`,
       time:      'Just now',
     };
     await addNotification(notifPayload);
@@ -401,19 +418,14 @@ export default function App() {
     await addNotification({
       studentId: 'admin',
       title:     'New Borrow Request',
-      message:   `${student.name || 'Student'} requested ${equipment.name} (${equipment.id}).`,
+      message:   `${student.name || 'Student'} requested ${equipment.name} (${equipment.id}). Due ${formattedReturnBy}.`,
       time:      'Just now',
       category:  'request',
     });
 
     // Trigger Phone Status Bar Push Banner
     triggerPushBanner(notifPayload);
-
-    setScannedEquipment(null);
-    setShowBrowse(false);
-    setCurrentTab('borrowings');
     try { confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } }); } catch (e) {}
-    triggerToast(`Borrow request submitted for ${equipment.name}! Awaiting admin approval.`);
   };
 
   // ── Student: Submit Return (enters 'Return Pending') ────────────────────────
@@ -763,8 +775,13 @@ export default function App() {
       {scannedEquipment && (
         <EquipmentDetailModal
           equipment={scannedEquipment}
+          student={student}
           onClose={() => setScannedEquipment(null)}
           onConfirmBorrow={handleConfirmBorrow}
+          onNavigate={(tab) => {
+            setScannedEquipment(null);
+            setCurrentTab(tab);
+          }}
         />
       )}
       {showBrowse && (

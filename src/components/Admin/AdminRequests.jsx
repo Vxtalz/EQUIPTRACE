@@ -220,9 +220,18 @@ export default function AdminRequests({
                 }}>
                   {req.studentInitials}
                 </div>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0F1E36' }}>
-                  {req.studentName}
-                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0F1E36', margin: 0 }}>
+                    {req.studentName}
+                  </h4>
+                  {(req.studentId || req.studentCourse || req.studentYear) && (
+                    <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '600', marginTop: '2px' }}>
+                      {req.studentId ? `ID: ${req.studentId}` : ''}
+                      {req.studentId && (req.studentCourse || req.studentYear) ? ' · ' : ''}
+                      {[req.studentCourse, req.studentYear].filter(Boolean).join(' ')}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Equipment & Details Grid */}
@@ -254,6 +263,15 @@ export default function AdminRequests({
                     {req.returnBy}
                   </span>
                 </div>
+
+                {req.purpose && (
+                  <div>
+                    <span style={{ color: '#94A3B8', display: 'block' }}>Purpose</span>
+                    <span style={{ color: '#0F1E36', fontWeight: '600', display: 'block', marginTop: '2px' }}>
+                      {req.purpose}
+                    </span>
+                  </div>
+                )}
 
                 <div>
                   <span style={{ color: '#94A3B8', display: 'block' }}>Status</span>
