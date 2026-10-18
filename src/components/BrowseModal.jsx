@@ -1,18 +1,33 @@
 import React, { useState, useMemo } from 'react';
-import { X, Search, QrCode, Sparkles } from 'lucide-react';
-import { SPORTS_CATEGORIES, CATEGORY_IMAGES } from '../data/mockData';
+import { X, Search, QrCode } from 'lucide-react';
+import { SPORTS_CATEGORIES, CATEGORY_IMAGES, normalizeEquipmentCategory } from '../data/mockData';
 
 export default function BrowseModal({ equipmentList = [], onClose, onSelectEquipment }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const categories = useMemo(() => {
-    const fromList = equipmentList.map((e) => e.category).filter(Boolean);
-    const set = new Set([...SPORTS_CATEGORIES, ...fromList]);
-    return ['All', ...Array.from(set)];
+  // Normalize all items so generic legacy categories like 'PE & Sports' become their proper sports
+  const normalizedItems = useMemo(() => {
+    return equipmentList.map((item) => {
+      const category = normalizeEquipmentCategory(item);
+      return {
+        ...item,
+        category,
+        image: item.image || CATEGORY_IMAGES[category] || '',
+      };
+    });
   }, [equipmentList]);
 
-  const filteredItems = equipmentList.filter((item) => {
+  // Exclude 'PE & Sports', 'Electronics', and 'Laboratory'
+  const categories = useMemo(() => {
+    const fromList = normalizedItems
+      .map((e) => e.category)
+      .filter((cat) => Boolean(cat) && cat !== 'PE & Sports' && cat !== 'Electronics' && cat !== 'Laboratory');
+    const set = new Set([...SPORTS_CATEGORIES, ...fromList]);
+    return ['All', ...Array.from(set)];
+  }, [normalizedItems]);
+
+  const filteredItems = normalizedItems.filter((item) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||

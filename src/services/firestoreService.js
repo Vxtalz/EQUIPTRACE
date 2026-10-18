@@ -72,11 +72,27 @@ export async function seedEquipmentIfEmpty(defaultItems = []) {
       }
     } else if (defaultItems.length > 0) {
       const existingIds = new Set();
-      snap.forEach((docSnap) => {
+      for (const docSnap of snap.docs) {
         const d = docSnap.data();
         if (d.id) existingIds.add(String(d.id).toUpperCase());
         if (d.code) existingIds.add(String(d.code).replace('#', '').toUpperCase());
-      });
+
+        // Auto-migrate legacy 'PE & Sports', 'Electronics', or 'Laboratory' in Firestore
+        if (d.category === 'PE & Sports' || d.category === 'Electronics' || d.category === 'Laboratory') {
+          const nameLower = (d.name || '').toLowerCase();
+          const newCat = nameLower.includes('basketball') ? 'Basketball'
+            : nameLower.includes('volleyball') ? 'Volleyball'
+            : nameLower.includes('tennis') ? 'Tennis'
+            : nameLower.includes('badminton') ? 'Badminton'
+            : nameLower.includes('soccer') || nameLower.includes('football') ? 'Football'
+            : 'Basketball';
+          try {
+            await updateDoc(docSnap.ref, { category: newCat });
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
 
       for (const item of defaultItems) {
         const checkId = String(item.id).toUpperCase();

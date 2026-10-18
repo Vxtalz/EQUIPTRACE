@@ -56,6 +56,7 @@ import {
   INITIAL_EQUIPMENT_LIST,
   INITIAL_NOTIFICATIONS,
   CATEGORY_IMAGES,
+  normalizeEquipmentCategory,
 } from './data/mockData';
 
 import {
@@ -224,12 +225,16 @@ export default function App() {
     // Equipment (all roles)
     const unsubEq = subscribeEquipment((items) => {
       if (items.length > 0) {
-        const enrichedItems = items.map((item, idx) => ({
-          ...item,
-          available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
-          total: item.total || 5,
-          image: item.image || CATEGORY_IMAGES[item.category] || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
-        }));
+        const enrichedItems = items.map((item, idx) => {
+          const category = normalizeEquipmentCategory(item);
+          return {
+            ...item,
+            category,
+            available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
+            total: item.total || 5,
+            image: item.image || CATEGORY_IMAGES[category] || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
+          };
+        });
         setEquipmentList(enrichedItems);
         if (role === 'Admin') setAdminEquipment(enrichedItems);
       } else {
