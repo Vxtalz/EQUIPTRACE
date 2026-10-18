@@ -381,11 +381,21 @@ export default function AdminReturnApproval({
               <PackageCheck size={26} color="#1D61E7" />
             </div>
             <h4 style={{ fontSize: '1rem', fontWeight: '800', color: '#0F1E36' }}>
-              No {filterTab} returns
+              {filterTab === 'Borrowed'
+                ? 'No Borrowed Items'
+                : filterTab === 'Return Pending'
+                ? 'No Pending Returns'
+                : filterTab === 'Needs Inspection'
+                ? 'No Items Needing Inspection'
+                : filterTab === 'Returned'
+                ? 'No Returned Items'
+                : 'No Records Found'}
             </h4>
             <p style={{ fontSize: '0.8rem', color: '#64748B', marginTop: '4px' }}>
               {filterTab === 'Return Pending'
                 ? 'All handed-in gear has been inspected and cleared.'
+                : filterTab === 'Borrowed'
+                ? 'There are currently no active borrowed items.'
                 : 'No equipment matches the selected search and filter.'}
             </p>
           </div>
