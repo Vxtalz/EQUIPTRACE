@@ -222,8 +222,8 @@ export default function AdminReturnApproval({
     >
       {/* Top Header */}
       <div style={{ paddingTop: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
             <img
               src={equiptraceLogo}
               alt="EquipTrace"
@@ -231,19 +231,20 @@ export default function AdminReturnApproval({
                 height: '38px',
                 objectFit: 'contain',
                 display: 'block',
+                flexShrink: 0,
               }}
             />
-            <div style={{ borderLeft: '2px solid #CBD5E1', paddingLeft: '12px' }}>
+            <div style={{ borderLeft: '2px solid #CBD5E1', paddingLeft: '12px', minWidth: 0 }}>
               <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0F1E36', letterSpacing: '-0.3px', margin: 0, lineHeight: '1.2' }}>
                 Return Approval
               </h2>
-              <p style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '500', margin: '2px 0 0 0' }}>
+              <p style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '500', margin: '2px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Verify physical condition and finalize returns
               </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             {pendingCount > 0 && (
               <span
                 style={{
@@ -254,6 +255,11 @@ export default function AdminReturnApproval({
                   padding: '4px 10px',
                   borderRadius: '9999px',
                   boxShadow: '0 2px 6px rgba(239,68,68,0.3)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  lineHeight: '1',
                 }}
               >
                 {pendingCount} Pending
