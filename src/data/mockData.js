@@ -39,6 +39,7 @@ export const CATEGORY_IMAGES = {
   'Tennis': tennisImg,
   'Table Tennis': tableTennisImg,
   'Track and Field': trackAndFieldImg,
+  'Track & Field': trackAndFieldImg,
   'Football': footballImg,
   'Sepak Takraw': sepakTakrawImg,
   'Beach Volleyball': beachVolleyballImg,
@@ -46,6 +47,37 @@ export const CATEGORY_IMAGES = {
   'Badminton': badmintonImg,
   'Futsal': futsalImg,
 };
+
+export function getSportImage(itemOrCategory) {
+  if (!itemOrCategory) return basketballImg;
+
+  let cat = '';
+  let name = '';
+  if (typeof itemOrCategory === 'string') {
+    cat = itemOrCategory;
+  } else if (typeof itemOrCategory === 'object') {
+    cat = itemOrCategory.category || '';
+    name = (itemOrCategory.name || '') + ' ' + (itemOrCategory.code || '');
+  }
+
+  const combined = (cat + ' ' + name).toLowerCase();
+
+  if (combined.includes('beach volleyball') || (combined.includes('volleyball') && combined.includes('sand'))) return beachVolleyballImg;
+  if (combined.includes('table tennis') || combined.includes('ping pong') || combined.includes('paddle') || combined.includes('stiga') || combined.includes('dhs')) return tableTennisImg;
+  if (combined.includes('track') || combined.includes('field') || combined.includes('baton') || combined.includes('shot put') || combined.includes('hurdle') || combined.includes('stopwatch')) return trackAndFieldImg;
+  if (combined.includes('sepak') || combined.includes('takraw')) return sepakTakrawImg;
+  if (combined.includes('billiard') || combined.includes('pool') || combined.includes('cue') || combined.includes('triangle')) return billiardsImg;
+  if (combined.includes('badminton') || combined.includes('shuttlecock') || combined.includes('yonex')) return badmintonImg;
+  if (combined.includes('futsal')) return futsalImg;
+  if (combined.includes('football') || combined.includes('soccer') || combined.includes('fifa') || combined.includes('goal')) return footballImg;
+  if (combined.includes('tennis')) return tennisImg;
+  if (combined.includes('volleyball')) return volleyballImg;
+  if (combined.includes('basketball')) return basketballImg;
+
+  if (CATEGORY_IMAGES[cat]) return CATEGORY_IMAGES[cat];
+
+  return basketballImg;
+}
 
 export const INITIAL_EQUIPMENT_LIST = [
   {

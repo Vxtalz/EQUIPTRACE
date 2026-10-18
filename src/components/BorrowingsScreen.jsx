@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, CheckCircle2, RotateCcw, PackageCheck, Clock } from 'lucide-react';
-import { CATEGORY_IMAGES } from '../data/mockData';
+import { CATEGORY_IMAGES, getSportImage } from '../data/mockData';
 
 export default function BorrowingsScreen({
   onBack,
@@ -130,7 +130,7 @@ export default function BorrowingsScreen({
               >
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                   <img
-                    src={CATEGORY_IMAGES[item.category] || item.image || CATEGORY_IMAGES['Basketball']}
+                    src={getSportImage(item)}
                     alt={item.name}
                     style={{
                       width: '64px',
@@ -143,7 +143,7 @@ export default function BorrowingsScreen({
                       flexShrink: 0,
                     }}
                     onError={(e) => {
-                      e.currentTarget.src = CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES['Basketball'];
+                      e.currentTarget.src = getSportImage(item);
                     }}
                   />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>

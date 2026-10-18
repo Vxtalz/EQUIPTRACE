@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { X, Search, QrCode } from 'lucide-react';
-import { SPORTS_CATEGORIES, CATEGORY_IMAGES, INITIAL_EQUIPMENT_LIST, normalizeEquipmentCategory } from '../data/mockData';
+import { SPORTS_CATEGORIES, CATEGORY_IMAGES, INITIAL_EQUIPMENT_LIST, normalizeEquipmentCategory, getSportImage } from '../data/mockData';
 
 export default function BrowseModal({ equipmentList = [], onClose, onSelectEquipment }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,12 +23,11 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
 
     return Array.from(map.values()).map((item) => {
       const category = normalizeEquipmentCategory(item);
-      const isLegacyUnsplash = typeof item.image === 'string' && item.image.includes('images.unsplash.com');
       return {
         ...item,
         category,
         available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
-        image: (!item.image || isLegacyUnsplash) ? (CATEGORY_IMAGES[category] || item.image || '') : (CATEGORY_IMAGES[category] || item.image || ''),
+        image: getSportImage({ ...item, category }),
       };
     });
   }, [equipmentList]);
@@ -216,10 +215,7 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
             </div>
           ) : (
             filteredItems.map((item) => {
-              const isLegacyUnsplash = typeof item.image === 'string' && item.image.includes('images.unsplash.com');
-              const imageSrc = (!item.image || isLegacyUnsplash)
-                ? (CATEGORY_IMAGES[item.category] || item.image || CATEGORY_IMAGES['Basketball'])
-                : (CATEGORY_IMAGES[item.category] || item.image || CATEGORY_IMAGES['Basketball']);
+              const imageSrc = getSportImage(item);
               const availableUnits = item.available !== undefined
                 ? item.available
                 : (item.status === 'Available' ? 5 : 0);
@@ -264,7 +260,7 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
                       flexShrink: 0,
                     }}
                     onError={(e) => {
-                      e.currentTarget.src = CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES['Basketball'];
+                      e.currentTarget.src = getSportImage(item);
                     }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>

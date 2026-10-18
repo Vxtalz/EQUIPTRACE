@@ -57,6 +57,7 @@ import {
   INITIAL_NOTIFICATIONS,
   CATEGORY_IMAGES,
   normalizeEquipmentCategory,
+  getSportImage,
 } from './data/mockData';
 
 import {
@@ -236,17 +237,14 @@ export default function App() {
         map.set(key, { ...base, ...item });
       });
 
-      const enrichedItems = Array.from(map.values()).map((item, idx) => {
+      const enrichedItems = Array.from(map.values()).map((item) => {
         const category = normalizeEquipmentCategory(item);
-        const isLegacyUnsplash = typeof item.image === 'string' && item.image.includes('images.unsplash.com');
         return {
           ...item,
           category,
           available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
           total: item.total || 5,
-          image: (!item.image || isLegacyUnsplash)
-            ? (CATEGORY_IMAGES[category] || item.image || '')
-            : (CATEGORY_IMAGES[category] || item.image),
+          image: getSportImage({ ...item, category }),
         };
       });
 

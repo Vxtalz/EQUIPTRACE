@@ -77,17 +77,28 @@ export async function seedEquipmentIfEmpty(defaultItems = []) {
         if (d.id) existingIds.add(String(d.id).toUpperCase());
         if (d.code) existingIds.add(String(d.code).replace('#', '').toUpperCase());
 
-        // Auto-migrate legacy 'PE & Sports', 'Electronics', or 'Laboratory' in Firestore
-        if (d.category === 'PE & Sports' || d.category === 'Electronics' || d.category === 'Laboratory') {
+        // Auto-migrate legacy 'PE & Sports', 'Electronics', or 'Laboratory' or Unsplash images in Firestore
+        const isLegacyUnsplash = d.image && typeof d.image === 'string' && d.image.includes('unsplash.com');
+        const isLegacyCategory = d.category === 'PE & Sports' || d.category === 'Electronics' || d.category === 'Laboratory' || !d.category;
+        if (isLegacyCategory || isLegacyUnsplash) {
           const nameLower = (d.name || '').toLowerCase();
-          const newCat = nameLower.includes('basketball') ? 'Basketball'
+          const newCat = nameLower.includes('table tennis') || nameLower.includes('ping pong') || nameLower.includes('paddle') ? 'Table Tennis'
+            : nameLower.includes('beach volleyball') || nameLower.includes('sand') ? 'Beach Volleyball'
             : nameLower.includes('volleyball') ? 'Volleyball'
+            : nameLower.includes('basketball') ? 'Basketball'
             : nameLower.includes('tennis') ? 'Tennis'
-            : nameLower.includes('badminton') ? 'Badminton'
-            : nameLower.includes('soccer') || nameLower.includes('football') ? 'Football'
-            : 'Basketball';
+            : nameLower.includes('track') || nameLower.includes('baton') || nameLower.includes('shot put') ? 'Track and Field'
+            : nameLower.includes('futsal') ? 'Futsal'
+            : nameLower.includes('football') || nameLower.includes('soccer') ? 'Football'
+            : nameLower.includes('takraw') ? 'Sepak Takraw'
+            : nameLower.includes('billiard') || nameLower.includes('pool') ? 'Billiards'
+            : nameLower.includes('badminton') || nameLower.includes('shuttlecock') ? 'Badminton'
+            : (d.category && !isLegacyCategory ? d.category : 'Basketball');
           try {
-            await updateDoc(docSnap.ref, { category: newCat });
+            await updateDoc(docSnap.ref, {
+              category: newCat,
+              image: isLegacyUnsplash ? '' : (d.image || '')
+            });
           } catch (e) {
             // ignore
           }
@@ -99,6 +110,7 @@ export async function seedEquipmentIfEmpty(defaultItems = []) {
         if (!existingIds.has(checkId)) {
           await addDoc(collection(db, 'equipment'), {
             ...item,
+            image: '',
             createdAt: serverTimestamp(),
           });
         }
