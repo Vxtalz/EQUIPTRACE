@@ -87,10 +87,12 @@ export async function updateEquipment(firestoreId, fields) {
 // ─── BORROWINGS (active) ────────────────────────────────────────────────────
 
 export function subscribeBorrowings(studentId, callback) {
-  const q = query(
-    collection(db, 'borrowings'),
-    where('studentId', '==', studentId)
-  );
+  const q = studentId
+    ? query(
+        collection(db, 'borrowings'),
+        where('studentId', '==', studentId)
+      )
+    : collection(db, 'borrowings');
   return onSnapshot(q, (snap) => callback(snap2arr(snap)), (err) =>
     console.warn('[Firestore] borrowings sub error:', err)
   );

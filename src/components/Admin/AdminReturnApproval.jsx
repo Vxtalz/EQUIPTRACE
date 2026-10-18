@@ -41,16 +41,17 @@ export default function AdminReturnApproval({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmActionType, setConfirmActionType] = useState('approve'); // 'approve' | 'flag'
 
-  // Merge active borrowings with status !== 'Return Pending' as 'Borrowed' view
+  // Merge active borrowings with status 'Active' / 'Borrowed' as 'Borrowed' view
   const activeBorrowedItems = borrowings
-    .filter((b) => b.status !== 'Return Pending')
+    .filter((b) => b.status === 'Active' || b.status === 'Borrowed' || !b.status)
     .map((b) => ({
       ...b,
       id: b.borrowId || b.id,
+      borrowingDocId: b.firestoreId || '',
       equipmentId: b.id,
       equipmentName: b.name,
       status: 'Borrowed',
-      returnSubmittedTime: 'Not yet returned',
+      returnSubmittedTime: 'With student',
       returnSubmittedDate: b.borrowedTime || 'Active',
       condition: 'In Use',
     }));
@@ -298,7 +299,7 @@ export default function AdminReturnApproval({
           { key: 'Return Pending', label: `Pending (${pendingCount})` },
           { key: 'Needs Inspection', label: `Inspection (${inspectionCount})` },
           { key: 'Returned', label: 'Returned' },
-          { key: 'Borrowed', label: 'Borrowed' },
+          { key: 'Borrowed', label: `Borrowed (${activeBorrowedItems.length})` },
           { key: 'All', label: 'All Records' },
         ].map((tab) => {
           const isActive = filterTab === tab.key;
@@ -544,6 +545,34 @@ export default function AdminReturnApproval({
                   >
                     <ShieldCheck size={18} />
                     Inspect & Approve Return
+                  </button>
+                )}
+
+                {item.status === 'Borrowed' && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenInspect(item)}
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      backgroundColor: '#1D61E7',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '0.88rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(29,97,231,0.25)',
+                      fontFamily: 'inherit',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <ShieldCheck size={18} />
+                    Receive & Inspect Return
                   </button>
                 )}
 

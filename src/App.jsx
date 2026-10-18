@@ -245,6 +245,9 @@ export default function App() {
 
     } else {
       // Admin
+      const unsubBorrow = subscribeBorrowings(null, (rows) => setBorrowings(rows));
+      unsubRefs.current.push(unsubBorrow);
+
       const unsubReq = subscribeRequests((rows) => {
         setAdminRequests(rows);
         // Recompute KPIs from live equipment
@@ -413,6 +416,20 @@ export default function App() {
     const adminName = student?.name || authUser?.displayName || authUser?.email?.split('@')[0] || 'Administrator';
     const adminUid = authUser?.uid || '';
 
+    // If initiated directly from the Borrowed tab without a pre-existing return_approvals doc
+    if (!approvalData.returnDocId) {
+      const newReturnDocId = await submitReturnPending({
+        borrowId: approvalData.borrowId || `BORROW-${Date.now()}`,
+        firestoreId: approvalData.borrowingDocId,
+        id: approvalData.equipmentId,
+        name: approvalData.equipmentName,
+        category: approvalData.category || 'PE & Sports',
+        studentId: approvalData.studentId,
+        studentName: approvalData.studentName,
+      });
+      approvalData.returnDocId = newReturnDocId;
+    }
+
     await approveReturnSubmission({
       ...approvalData,
       adminName,
@@ -425,6 +442,19 @@ export default function App() {
   const handleFlagInspection = async (flagData) => {
     const adminName = student?.name || authUser?.displayName || authUser?.email?.split('@')[0] || 'Administrator';
     const adminUid = authUser?.uid || '';
+
+    if (!flagData.returnDocId) {
+      const newReturnDocId = await submitReturnPending({
+        borrowId: flagData.borrowId || `BORROW-${Date.now()}`,
+        firestoreId: flagData.borrowingDocId,
+        id: flagData.equipmentId,
+        name: flagData.equipmentName,
+        category: flagData.category || 'PE & Sports',
+        studentId: flagData.studentId,
+        studentName: flagData.studentName,
+      });
+      flagData.returnDocId = newReturnDocId;
+    }
 
     await flagReturnForInspection({
       ...flagData,
