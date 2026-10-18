@@ -307,6 +307,10 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
                   </div>
                   <button
                     type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isAvailable) onSelectEquipment(item);
+                    }}
                     style={{
                       backgroundColor: isAvailable ? '#EEF4FF' : '#F1F5F9',
                       color: isAvailable ? '#1D61E7' : '#94A3B8',

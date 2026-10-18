@@ -794,6 +794,13 @@ export default function App() {
 
   const renderModals = (
     <>
+      {showBrowse && (
+        <BrowseModal
+          equipmentList={equipmentList}
+          onClose={() => setShowBrowse(false)}
+          onSelectEquipment={(item) => setScannedEquipment(item)}
+        />
+      )}
       {scannedEquipment && (
         <EquipmentDetailModal
           equipment={scannedEquipment}
@@ -802,15 +809,9 @@ export default function App() {
           onConfirmBorrow={handleConfirmBorrow}
           onNavigate={(tab) => {
             setScannedEquipment(null);
+            setShowBrowse(false);
             setCurrentTab(tab);
           }}
-        />
-      )}
-      {showBrowse && (
-        <BrowseModal
-          equipmentList={equipmentList}
-          onClose={() => setShowBrowse(false)}
-          onSelectEquipment={(item) => setScannedEquipment(item)}
         />
       )}
       {showAddEquipmentModal && (
