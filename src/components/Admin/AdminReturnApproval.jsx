@@ -586,33 +586,6 @@ export default function AdminReturnApproval({
                   </button>
                 )}
 
-                {item.status === 'Borrowed' && (
-                  <button
-                    type="button"
-                    onClick={() => handleOpenInspect(item)}
-                    style={{
-                      width: '100%',
-                      height: '44px',
-                      backgroundColor: '#1D61E7',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontSize: '0.88rem',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 12px rgba(29,97,231,0.25)',
-                      fontFamily: 'inherit',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <ShieldCheck size={18} />
-                    Receive & Inspect Return
-                  </button>
-                )}
 
                 {item.status === 'Returned' && (
                   <div style={{ fontSize: '0.75rem', color: '#15803D', display: 'flex', alignItems: 'center', gap: '6px' }}>
