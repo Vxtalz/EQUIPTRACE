@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, Search, Plus, Settings } from 'lucide-react';
 import equiptraceLogo from '../../assets/equiptrace-logo.png';
+import { CATEGORY_IMAGES } from '../../data/mockData';
 
 export default function AdminEquipment({
   equipmentList = [],
@@ -226,11 +227,20 @@ export default function AdminEquipment({
                 overflow: 'hidden',
                 flexShrink: 0,
               }}>
-                {item.image ? (
+                {CATEGORY_IMAGES[item.category] || item.image ? (
                   <img
-                    src={item.image}
+                    src={CATEGORY_IMAGES[item.category] || item.image}
                     alt={item.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      backgroundColor: '#F8FAFC',
+                      padding: '2px',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES['Basketball'];
+                    }}
                   />
                 ) : (
                   <span style={{ fontSize: '1.3rem' }}>{item.icon || '📦'}</span>

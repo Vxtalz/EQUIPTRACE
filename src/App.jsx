@@ -238,12 +238,15 @@ export default function App() {
 
       const enrichedItems = Array.from(map.values()).map((item, idx) => {
         const category = normalizeEquipmentCategory(item);
+        const isLegacyUnsplash = typeof item.image === 'string' && item.image.includes('images.unsplash.com');
         return {
           ...item,
           category,
           available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
           total: item.total || 5,
-          image: item.image || CATEGORY_IMAGES[category] || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
+          image: (!item.image || isLegacyUnsplash)
+            ? (CATEGORY_IMAGES[category] || item.image || '')
+            : (CATEGORY_IMAGES[category] || item.image),
         };
       });
 
@@ -643,7 +646,7 @@ export default function App() {
       available: newItem.available ?? 5,
       total: newItem.total ?? 5,
       status: newItem.status || 'Available',
-      image: newItem.image || CATEGORY_IMAGES[newItem.category] || '',
+      image: CATEGORY_IMAGES[newItem.category] || newItem.image || '',
     };
     await fsAddEquipment(finalItem);
     triggerToast(`Added ${newItem.name} to inventory!`);

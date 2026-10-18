@@ -10,6 +10,7 @@ import {
   Tag,
   FileText,
 } from 'lucide-react';
+import { CATEGORY_IMAGES } from '../data/mockData';
 
 export default function EquipmentDetailModal({
   equipment,
@@ -272,14 +273,21 @@ export default function EquipmentDetailModal({
         {/* Equipment Image & Title */}
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <img
-            src={equipment.image}
+            src={CATEGORY_IMAGES[equipment.category] || equipment.image || CATEGORY_IMAGES['Basketball']}
             alt={equipment.name}
             style={{
               width: '80px',
               height: '80px',
               borderRadius: '16px',
-              objectFit: 'cover',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              objectFit: 'contain',
+              backgroundColor: '#F8FAFC',
+              padding: '6px',
+              border: '1px solid #E2E8F0',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+              flexShrink: 0,
+            }}
+            onError={(e) => {
+              e.currentTarget.src = CATEGORY_IMAGES[equipment.category] || CATEGORY_IMAGES['Basketball'];
             }}
           />
           <div style={{ display: 'flex', flexDirection: 'column' }}>

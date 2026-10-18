@@ -23,11 +23,12 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
 
     return Array.from(map.values()).map((item) => {
       const category = normalizeEquipmentCategory(item);
+      const isLegacyUnsplash = typeof item.image === 'string' && item.image.includes('images.unsplash.com');
       return {
         ...item,
         category,
         available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
-        image: item.image || CATEGORY_IMAGES[category] || '',
+        image: (!item.image || isLegacyUnsplash) ? (CATEGORY_IMAGES[category] || item.image || '') : (CATEGORY_IMAGES[category] || item.image || ''),
       };
     });
   }, [equipmentList]);
@@ -215,7 +216,10 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
             </div>
           ) : (
             filteredItems.map((item) => {
-              const imageSrc = item.image || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES['Basketball'];
+              const isLegacyUnsplash = typeof item.image === 'string' && item.image.includes('images.unsplash.com');
+              const imageSrc = (!item.image || isLegacyUnsplash)
+                ? (CATEGORY_IMAGES[item.category] || item.image || CATEGORY_IMAGES['Basketball'])
+                : (CATEGORY_IMAGES[item.category] || item.image || CATEGORY_IMAGES['Basketball']);
               const availableUnits = item.available !== undefined
                 ? item.available
                 : (item.status === 'Available' ? 5 : 0);
@@ -252,9 +256,11 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
                     style={{
                       width: '64px',
                       height: '64px',
-                      borderRadius: '12px',
-                      objectFit: 'cover',
-                      backgroundColor: '#F1F5F9',
+                      borderRadius: '14px',
+                      objectFit: 'contain',
+                      backgroundColor: '#F8FAFC',
+                      padding: '4px',
+                      border: '1px solid #E2E8F0',
                       flexShrink: 0,
                     }}
                     onError={(e) => {

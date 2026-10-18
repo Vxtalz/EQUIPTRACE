@@ -1,3 +1,15 @@
+import basketballImg from '../assets/sports/basketball.png';
+import volleyballImg from '../assets/sports/volleyball.png';
+import tennisImg from '../assets/sports/tennis.png';
+import tableTennisImg from '../assets/sports/table-tennis.png';
+import trackAndFieldImg from '../assets/sports/track-and-field.png';
+import footballImg from '../assets/sports/football.png';
+import sepakTakrawImg from '../assets/sports/sepak-takraw.png';
+import beachVolleyballImg from '../assets/sports/beach-volleyball.png';
+import billiardsImg from '../assets/sports/billiards.png';
+import badmintonImg from '../assets/sports/badminton.png';
+import futsalImg from '../assets/sports/futsal.png';
+
 export const CURRENT_STUDENT = {
   id: '2025-001',
   name: 'Juan Dela Cruz',
@@ -22,17 +34,17 @@ export const SPORTS_CATEGORIES = [
 ];
 
 export const CATEGORY_IMAGES = {
-  'Basketball': 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=400&q=80',
-  'Volleyball': 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=400&q=80',
-  'Tennis': 'https://images.unsplash.com/photo-1617083934555-ac7d4fed881a?auto=format&fit=crop&w=400&q=80',
-  'Table Tennis': 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
-  'Track and Field': 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80',
-  'Football': 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=400&q=80',
-  'Sepak Takraw': 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
-  'Beach Volleyball': 'https://images.unsplash.com/photo-1592656094267-764a45160876?auto=format&fit=crop&w=400&q=80',
-  'Billiards': 'https://images.unsplash.com/photo-1588497859490-85d1c17db96d?auto=format&fit=crop&w=400&q=80',
-  'Badminton': 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=400&q=80',
-  'Futsal': 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=400&q=80',
+  'Basketball': basketballImg,
+  'Volleyball': volleyballImg,
+  'Tennis': tennisImg,
+  'Table Tennis': tableTennisImg,
+  'Track and Field': trackAndFieldImg,
+  'Football': footballImg,
+  'Sepak Takraw': sepakTakrawImg,
+  'Beach Volleyball': beachVolleyballImg,
+  'Billiards': billiardsImg,
+  'Badminton': badmintonImg,
+  'Futsal': futsalImg,
 };
 
 export const INITIAL_EQUIPMENT_LIST = [
@@ -46,7 +58,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 12,
     location: 'PE Storage Room',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Basketball'],
     description: 'Official FIBA-approved composite leather basketball size 7.',
   },
   {
@@ -59,7 +71,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 12,
     location: 'Sports Complex Room 102',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Basketball'],
     description: 'Regulation size 7 composite leather basketball suitable for indoor court play.',
   },
   {
@@ -72,7 +84,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 10,
     location: 'Gymnasium Locker B',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Volleyball'],
     description: 'Official synthetic leather volleyball for indoor training.',
   },
   {
@@ -85,7 +97,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'PE Storage Room',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1592656094267-764a45160876?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Volleyball'],
     description: 'High-performance 18-panel volleyball with dimpled surface.',
   },
   {
@@ -98,7 +110,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'Sports Complex Room 102',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Badminton'],
     description: 'Pair of lightweight graphite rackets with carrying case and shuttlecocks.',
   },
   {
@@ -111,7 +123,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'Sports Office',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1617083934555-ac7d4fed881a?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Tennis'],
     description: 'Graphite composite tennis racket with synthetic gut strings.',
   },
   {
@@ -124,7 +136,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'Field Equipment Shed',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Football'],
     description: 'Seamless thermal-bonded match soccer ball size 5.',
   },
   {
@@ -137,7 +149,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 10,
     location: 'Track & Oval Shed',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Track and Field'],
     description: 'Anodized aluminum competition relay batons and running stopwatch.',
   },
   {
@@ -150,7 +162,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'Field Equipment Shed',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Track and Field'],
     description: 'Solid cast iron competition shot put sphere 5.0kg.',
   },
   {
@@ -163,7 +175,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'Track & Oval Shed',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Track and Field'],
     description: 'Adjustable 6m speed agility ladder and 6 micro-hurdles.',
   },
   {
@@ -176,7 +188,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 10,
     location: 'PE Faculty Office',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Track and Field'],
     description: 'Multi-lap precision track & field digital coach stopwatch.',
   },
   {
@@ -189,7 +201,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 10,
     location: 'Field Equipment Shed',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Football'],
     description: 'Aerowsculpt groove technology size 5 football for team training.',
   },
   {
@@ -202,7 +214,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'Field Equipment Shed',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Football'],
     description: 'Padded latex palm goalkeeper match gloves size 9.',
   },
   {
@@ -215,7 +227,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'PE Storage Room',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Football'],
     description: 'Breathable neon scrimmage pinnies for practice matches.',
   },
   {
@@ -228,7 +240,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'PE Storage Room',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Sepak Takraw'],
     description: 'Official tournament woven synthetic rattan sepak takraw ball.',
   },
   {
@@ -241,7 +253,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'Gymnasium Locker B',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Sepak Takraw'],
     description: 'Competition grade woven ball for fast court action.',
   },
   {
@@ -254,7 +266,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 4,
     location: 'PE Storage Room',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Sepak Takraw'],
     description: 'Regulation nylon mesh net with reinforced steel cable.',
   },
   {
@@ -267,7 +279,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'Sand Court Storage',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1592656094267-764a45160876?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Beach Volleyball'],
     description: 'Soft stitched 10-panel water-resistant beach volleyball.',
   },
   {
@@ -280,7 +292,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'Sand Court Storage',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1592656094267-764a45160876?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Beach Volleyball'],
     description: 'Iconic outdoor beach volleyball with 18-panel synthetic cover.',
   },
   {
@@ -293,7 +305,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 4,
     location: 'Sand Court Storage',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1592656094267-764a45160876?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Beach Volleyball'],
     description: 'Heavy duty blue webbing boundary line with corner anchors.',
   },
   {
@@ -306,7 +318,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 4,
     location: 'Student Activity Hall',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1588497859490-85d1c17db96d?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Billiards'],
     description: 'Standard 16-ball phenolic billiard ball set with two 57-inch cues.',
   },
   {
@@ -319,7 +331,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'Student Activity Hall',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1588497859490-85d1c17db96d?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Billiards'],
     description: '19oz professional Canadian maple cue with 13mm leather tip.',
   },
   {
@@ -332,7 +344,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 5,
     location: 'Student Activity Hall',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1588497859490-85d1c17db96d?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Billiards'],
     description: 'Solid wood triangle rack and regulation 2-1/4 inch cue ball.',
   },
   {
@@ -345,7 +357,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 15,
     location: 'Sports Complex Room 102',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Badminton'],
     description: 'Tournament grade duck feather shuttlecocks speed 77.',
   },
   {
@@ -358,7 +370,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'Sports Complex Room 102',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Badminton'],
     description: 'Rotational Generator system offensive badminton racket.',
   },
   {
@@ -371,7 +383,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 4,
     location: 'Gymnasium Locker B',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Badminton'],
     description: 'Official 20ft badminton net with braided nylon cord.',
   },
   {
@@ -384,7 +396,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 8,
     location: 'Gymnasium Locker B',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Futsal'],
     description: 'Low-bounce regulation size 4 futsal ball for hardwood and indoor courts.',
   },
   {
@@ -397,7 +409,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'Gymnasium Locker B',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Futsal'],
     description: 'High-visibility grain PU surface match futsal ball.',
   },
   {
@@ -410,7 +422,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 6,
     location: 'PE Storage Room',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Futsal'],
     description: 'EVA foam compression support sleeves for indoor futsal keepers.',
   },
   {
@@ -423,7 +435,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 10,
     location: 'Rec Hall Storage',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Table Tennis'],
     description: 'Pair of 7-ply balsa carbon table tennis paddles with ITTF tournament rubber.',
   },
   {
@@ -436,7 +448,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 20,
     location: 'Rec Hall Storage',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Table Tennis'],
     description: 'Official 40+ celluloid-free 3-star tournament table tennis balls.',
   },
   {
@@ -449,7 +461,7 @@ export const INITIAL_EQUIPMENT_LIST = [
     total: 4,
     location: 'Rec Hall Storage',
     status: 'Available',
-    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    image: CATEGORY_IMAGES['Table Tennis'],
     description: 'Universal clamp-on adjustable spring table tennis net for any standard table.',
   },
 ];

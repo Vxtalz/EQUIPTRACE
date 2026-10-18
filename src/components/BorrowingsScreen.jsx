@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, CheckCircle2, RotateCcw, PackageCheck, Clock } from 'lucide-react';
+import { CATEGORY_IMAGES } from '../data/mockData';
 
 export default function BorrowingsScreen({
   onBack,
@@ -129,13 +130,20 @@ export default function BorrowingsScreen({
               >
                 <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                   <img
-                    src={item.image}
+                    src={CATEGORY_IMAGES[item.category] || item.image || CATEGORY_IMAGES['Basketball']}
                     alt={item.name}
                     style={{
                       width: '64px',
                       height: '64px',
                       borderRadius: '12px',
-                      objectFit: 'cover'
+                      objectFit: 'contain',
+                      backgroundColor: '#F8FAFC',
+                      padding: '4px',
+                      border: '1px solid #E2E8F0',
+                      flexShrink: 0,
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES['Basketball'];
                     }}
                   />
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
