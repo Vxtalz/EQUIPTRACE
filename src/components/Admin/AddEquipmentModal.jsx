@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
-import { X, Plus, Package } from 'lucide-react';
+import { X, Package } from 'lucide-react';
+import { CATEGORY_IMAGES, SPORTS_CATEGORIES } from '../../data/mockData';
+
+const DEFAULT_CATEGORY_ICONS = {
+  'Basketball': '🏀',
+  'Volleyball': '🏐',
+  'Tennis': '🎾',
+  'Track and Field': '🏃',
+  'Football': '⚽',
+  'Sepak Takraw': '🏐',
+  'Beach Volleyball': '🏐',
+  'Billiards': '🎱',
+  'Badminton': '🏸',
+  'Futsal': '⚽',
+};
 
 export default function AddEquipmentModal({ onClose, onAddEquipment }) {
   const [name, setName] = useState('');
@@ -7,21 +21,27 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
   const [category, setCategory] = useState('Basketball');
   const [location, setLocation] = useState('PE Storage Room');
   const [condition, setCondition] = useState('Good');
-  const [icon, setIcon] = useState('🏀');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!name || !code) return;
+    if (!name.trim() || !code.trim()) return;
+
+    const formattedCode = code.startsWith('#') ? code.trim() : `#${code.trim()}`;
+    const cleanId = code.replace('#', '').trim();
 
     onAddEquipment({
-      id: code.replace('#', ''),
-      name,
-      code: code.startsWith('#') ? code : `#${code}`,
+      id: cleanId,
+      name: name.trim(),
+      code: formattedCode,
       category,
-      location,
+      location: location.trim() || 'PE Storage Room',
       condition,
       status: 'Available',
-      icon: icon || '📦'
+      available: 5,
+      total: 5,
+      image: CATEGORY_IMAGES[category] || '',
+      icon: DEFAULT_CATEGORY_ICONS[category] || '📦',
+      description: `${condition} condition ${category} gear stored at ${location.trim() || 'PE Storage Room'}.`,
     });
 
     onClose();
@@ -54,7 +74,7 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
           maxHeight: '90%',
           borderTopLeftRadius: '24px',
           borderTopRightRadius: '24px',
-          padding: '24px 20px 24px 20px',
+          padding: '24px 20px 28px 20px',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
@@ -62,13 +82,14 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
           overflowY: 'auto',
           overscrollBehavior: 'contain',
           touchAction: 'auto',
+          boxSizing: 'border-box',
         }}
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Package size={22} color="#1D61E7" />
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F1E36' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0F1E36', margin: 0 }}>
               Add New Equipment
             </h3>
           </div>
@@ -94,7 +115,7 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
             <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '4px', display: 'block' }}>
-              Item Name
+              Item Name <span style={{ color: '#EF4444' }}>*</span>
             </label>
             <input
               type="text"
@@ -107,10 +128,11 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
                 height: '44px',
                 padding: '0 14px',
                 borderRadius: '10px',
-                border: '1px solid #E2E8F0',
+                border: '1px solid #CBD5E1',
                 fontSize: '0.9rem',
                 outline: 'none',
-                fontFamily: 'inherit'
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
               }}
             />
           </div>
@@ -118,7 +140,7 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '4px', display: 'block' }}>
-                Equipment ID Code
+                Equipment ID Code <span style={{ color: '#EF4444' }}>*</span>
               </label>
               <input
                 type="text"
@@ -131,38 +153,15 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
                   height: '44px',
                   padding: '0 14px',
                   borderRadius: '10px',
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid #CBD5E1',
                   fontSize: '0.9rem',
                   outline: 'none',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
 
-            <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '4px', display: 'block' }}>
-                Emoji Icon
-              </label>
-              <input
-                type="text"
-                value={icon}
-                onChange={(e) => setIcon(e.target.value)}
-                placeholder="e.g. 🏸"
-                style={{
-                  width: '100%',
-                  height: '44px',
-                  padding: '0 14px',
-                  borderRadius: '10px',
-                  border: '1px solid #E2E8F0',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  fontFamily: 'inherit'
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '4px', display: 'block' }}>
                 Category
@@ -175,20 +174,23 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
                   height: '44px',
                   padding: '0 10px',
                   borderRadius: '10px',
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid #CBD5E1',
                   fontSize: '0.85rem',
                   outline: 'none',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F1E36',
+                  boxSizing: 'border-box',
                 }}
               >
-                <option value="Basketball">Basketball</option>
-                <option value="Volleyball">Volleyball</option>
-                <option value="Tennis">Tennis</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Laboratory">Laboratory</option>
+                {SPORTS_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
+          </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div>
               <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '4px', display: 'block' }}>
                 Storage Location
@@ -203,12 +205,40 @@ export default function AddEquipmentModal({ onClose, onAddEquipment }) {
                   height: '44px',
                   padding: '0 14px',
                   borderRadius: '10px',
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid #CBD5E1',
                   fontSize: '0.85rem',
                   outline: 'none',
-                  fontFamily: 'inherit'
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box',
                 }}
               />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '4px', display: 'block' }}>
+                Condition
+              </label>
+              <select
+                value={condition}
+                onChange={(e) => setCondition(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '44px',
+                  padding: '0 10px',
+                  borderRadius: '10px',
+                  border: '1px solid #CBD5E1',
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F1E36',
+                  boxSizing: 'border-box',
+                }}
+              >
+                <option value="Good">Good</option>
+                <option value="Excellent">Excellent</option>
+                <option value="Fair">Fair</option>
+              </select>
             </div>
           </div>
 

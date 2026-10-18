@@ -216,16 +216,25 @@ export default function AdminEquipment({
             {/* Header Title + Emoji Container */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
-                width: '44px',
-                height: '44px',
+                width: '46px',
+                height: '46px',
                 borderRadius: '12px',
                 backgroundColor: '#F1F5F9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.4rem'
+                overflow: 'hidden',
+                flexShrink: 0,
               }}>
-                {item.icon || '📦'}
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  <span style={{ fontSize: '1.3rem' }}>{item.icon || '📦'}</span>
+                )}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <h4 style={{ fontSize: '1rem', fontWeight: '800', color: '#0F1E36' }}>

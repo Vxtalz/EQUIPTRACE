@@ -59,7 +59,7 @@ export async function addEquipment(item) {
   return ref.id;
 }
 
-/** Auto-seed equipment items if Firestore collection is brand new / empty */
+/** Auto-seed equipment items if Firestore collection is empty, or add missing default sports gear */
 export async function seedEquipmentIfEmpty(defaultItems = []) {
   try {
     const snap = await getDocs(collection(db, 'equipment'));
@@ -69,6 +69,23 @@ export async function seedEquipmentIfEmpty(defaultItems = []) {
           ...item,
           createdAt: serverTimestamp(),
         });
+      }
+    } else if (defaultItems.length > 0) {
+      const existingIds = new Set();
+      snap.forEach((docSnap) => {
+        const d = docSnap.data();
+        if (d.id) existingIds.add(String(d.id).toUpperCase());
+        if (d.code) existingIds.add(String(d.code).replace('#', '').toUpperCase());
+      });
+
+      for (const item of defaultItems) {
+        const checkId = String(item.id).toUpperCase();
+        if (!existingIds.has(checkId)) {
+          await addDoc(collection(db, 'equipment'), {
+            ...item,
+            createdAt: serverTimestamp(),
+          });
+        }
       }
     }
   } catch (err) {

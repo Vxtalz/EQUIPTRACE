@@ -55,6 +55,7 @@ import {
   CURRENT_STUDENT,
   INITIAL_EQUIPMENT_LIST,
   INITIAL_NOTIFICATIONS,
+  CATEGORY_IMAGES,
 } from './data/mockData';
 
 import {
@@ -223,12 +224,14 @@ export default function App() {
     // Equipment (all roles)
     const unsubEq = subscribeEquipment((items) => {
       if (items.length > 0) {
-        // Merge images from local fallback list since Firestore won't store external URLs
-        setEquipmentList(items.map((item, idx) => ({
+        const enrichedItems = items.map((item, idx) => ({
           ...item,
-          image: item.image || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
-        })));
-        if (role === 'Admin') setAdminEquipment(items);
+          available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
+          total: item.total || 5,
+          image: item.image || CATEGORY_IMAGES[item.category] || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
+        }));
+        setEquipmentList(enrichedItems);
+        if (role === 'Admin') setAdminEquipment(enrichedItems);
       } else {
         // Fallback to initial inventory so scanner and catalog work instantly
         setEquipmentList(INITIAL_EQUIPMENT_LIST);
@@ -623,7 +626,14 @@ export default function App() {
 
   // ── Admin: Add Equipment ──────────────────────────────────────────────────────
   const handleAddAdminEquipment = async (newItem) => {
-    await fsAddEquipment(newItem);
+    const finalItem = {
+      ...newItem,
+      available: newItem.available ?? 5,
+      total: newItem.total ?? 5,
+      status: newItem.status || 'Available',
+      image: newItem.image || CATEGORY_IMAGES[newItem.category] || '',
+    };
+    await fsAddEquipment(finalItem);
     triggerToast(`Added ${newItem.name} to inventory!`);
   };
 
