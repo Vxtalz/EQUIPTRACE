@@ -1,18 +1,32 @@
 import React, { useState, useMemo } from 'react';
 import { X, Search, QrCode } from 'lucide-react';
-import { SPORTS_CATEGORIES, CATEGORY_IMAGES, normalizeEquipmentCategory } from '../data/mockData';
+import { SPORTS_CATEGORIES, CATEGORY_IMAGES, INITIAL_EQUIPMENT_LIST, normalizeEquipmentCategory } from '../data/mockData';
 
 export default function BrowseModal({ equipmentList = [], onClose, onSelectEquipment }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  // Normalize all items so generic legacy categories like 'PE & Sports' become their proper sports
+  // Merge equipmentList with INITIAL_EQUIPMENT_LIST so all sports equipment is always fully populated
   const normalizedItems = useMemo(() => {
-    return equipmentList.map((item) => {
+    const map = new Map();
+    // 1. Start with initial catalog containing all sports
+    INITIAL_EQUIPMENT_LIST.forEach((item) => {
+      const key = (item.id || item.code || '').replace('#', '').trim().toUpperCase();
+      map.set(key, { ...item });
+    });
+    // 2. Overlay live equipment from Firestore/state
+    equipmentList.forEach((item) => {
+      const key = (item.id || item.code || item.firestoreId || '').replace('#', '').trim().toUpperCase();
+      const base = map.get(key) || {};
+      map.set(key, { ...base, ...item });
+    });
+
+    return Array.from(map.values()).map((item) => {
       const category = normalizeEquipmentCategory(item);
       return {
         ...item,
         category,
+        available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
         image: item.image || CATEGORY_IMAGES[category] || '',
       };
     });
@@ -38,7 +52,7 @@ export default function BrowseModal({ equipmentList = [], onClose, onSelectEquip
 
     const matchesCategory =
       selectedCategory === 'All' ||
-      item.category?.toLowerCase() === selectedCategory.toLowerCase();
+      item.category?.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
 
     return matchesSearch && matchesCategory;
   });

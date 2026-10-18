@@ -224,24 +224,31 @@ export default function App() {
 
     // Equipment (all roles)
     const unsubEq = subscribeEquipment((items) => {
-      if (items.length > 0) {
-        const enrichedItems = items.map((item, idx) => {
-          const category = normalizeEquipmentCategory(item);
-          return {
-            ...item,
-            category,
-            available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
-            total: item.total || 5,
-            image: item.image || CATEGORY_IMAGES[category] || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
-          };
-        });
-        setEquipmentList(enrichedItems);
-        if (role === 'Admin') setAdminEquipment(enrichedItems);
-      } else {
-        // Fallback to initial inventory so scanner and catalog work instantly
-        setEquipmentList(INITIAL_EQUIPMENT_LIST);
-        if (role === 'Admin') setAdminEquipment(INITIAL_EQUIPMENT_LIST);
-      }
+      const map = new Map();
+      INITIAL_EQUIPMENT_LIST.forEach((item) => {
+        const key = (item.id || item.code || '').replace('#', '').trim().toUpperCase();
+        map.set(key, { ...item });
+      });
+
+      items.forEach((item) => {
+        const key = (item.id || item.code || item.firestoreId || '').replace('#', '').trim().toUpperCase();
+        const base = map.get(key) || {};
+        map.set(key, { ...base, ...item });
+      });
+
+      const enrichedItems = Array.from(map.values()).map((item, idx) => {
+        const category = normalizeEquipmentCategory(item);
+        return {
+          ...item,
+          category,
+          available: item.available !== undefined ? item.available : (item.status === 'Available' ? 5 : 0),
+          total: item.total || 5,
+          image: item.image || CATEGORY_IMAGES[category] || INITIAL_EQUIPMENT_LIST[idx % INITIAL_EQUIPMENT_LIST.length]?.image || '',
+        };
+      });
+
+      setEquipmentList(enrichedItems);
+      if (role === 'Admin') setAdminEquipment(enrichedItems);
     });
     unsubRefs.current.push(unsubEq);
 
