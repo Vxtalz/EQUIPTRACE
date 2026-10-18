@@ -8,8 +8,9 @@ namespace EquipTrace.Android;
 
 [Activity(
     Label = "EquipTrace",
-    Theme = "@android:style/Theme.NoTitleBar",
+    Theme = "@android:style/Theme.DeviceDefault.NoActionBar",
     MainLauncher = true,
+    Exported = true,
     ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.KeyboardHidden,
     HardwareAccelerated = true)]
 public class MainActivity : Activity

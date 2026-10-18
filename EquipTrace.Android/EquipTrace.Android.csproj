@@ -8,9 +8,17 @@
     <ApplicationId>com.equiptrace.app</ApplicationId>
     <ApplicationVersion>1</ApplicationVersion>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <TrimMode>partial</TrimMode>
+
+    <!-- CRITICAL: Make the APK 100% self-contained so it runs standalone on any phone without crashing -->
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <TrimMode>none</TrimMode>
+    <PublishTrimmed>false</PublishTrimmed>
+    <RunAOTCompilation>false</RunAOTCompilation>
+
     <NuGetAudit>false</NuGetAudit>
-    <NoWarn>$(NoWarn);NU1900</NoWarn>
+    <NoWarn>$(NoWarn);NU1900;CA1422;NETSDK1202</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
