@@ -11,6 +11,7 @@ export const SPORTS_CATEGORIES = [
   'Basketball',
   'Volleyball',
   'Tennis',
+  'Table Tennis',
   'Track and Field',
   'Football',
   'Sepak Takraw',
@@ -24,6 +25,7 @@ export const CATEGORY_IMAGES = {
   'Basketball': 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=400&q=80',
   'Volleyball': 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=400&q=80',
   'Tennis': 'https://images.unsplash.com/photo-1617083934555-ac7d4fed881a?auto=format&fit=crop&w=400&q=80',
+  'Table Tennis': 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
   'Track and Field': 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=400&q=80',
   'Football': 'https://images.unsplash.com/photo-1511886929837-354d827aae26?auto=format&fit=crop&w=400&q=80',
   'Sepak Takraw': 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
@@ -411,6 +413,45 @@ export const INITIAL_EQUIPMENT_LIST = [
     image: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=400&q=80',
     description: 'EVA foam compression support sleeves for indoor futsal keepers.',
   },
+  {
+    id: 'PE-031',
+    code: '#PE-031',
+    name: 'Stiga Pro Carbon Table Tennis Paddle Set',
+    category: 'Table Tennis',
+    condition: 'Excellent',
+    available: 8,
+    total: 10,
+    location: 'Rec Hall Storage',
+    status: 'Available',
+    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    description: 'Pair of 7-ply balsa carbon table tennis paddles with ITTF tournament rubber.',
+  },
+  {
+    id: 'PE-064',
+    code: '#PE-064',
+    name: 'DHS 3-Star Table Tennis Balls (Pack of 6)',
+    category: 'Table Tennis',
+    condition: 'Excellent',
+    available: 15,
+    total: 20,
+    location: 'Rec Hall Storage',
+    status: 'Available',
+    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    description: 'Official 40+ celluloid-free 3-star tournament table tennis balls.',
+  },
+  {
+    id: 'PE-065',
+    code: '#PE-065',
+    name: 'Butterfly Retractable Table Tennis Net Set',
+    category: 'Table Tennis',
+    condition: 'Very Good',
+    available: 4,
+    total: 4,
+    location: 'Rec Hall Storage',
+    status: 'Available',
+    image: 'https://images.unsplash.com/photo-1534158914592-062992fbe900?auto=format&fit=crop&w=400&q=80',
+    description: 'Universal clamp-on adjustable spring table tennis net for any standard table.',
+  },
 ];
 
 export function normalizeEquipmentCategory(item) {
@@ -423,6 +464,7 @@ export function normalizeEquipmentCategory(item) {
     return item.category;
   }
   const n = (item.name || '').toLowerCase();
+  if (n.includes('table tennis') || n.includes('ping pong') || n.includes('paddle') || n.includes('stiga') || n.includes('dhs')) return 'Table Tennis';
   if (n.includes('basketball')) return 'Basketball';
   if (n.includes('beach volleyball') || n.includes('sand')) return 'Beach Volleyball';
   if (n.includes('volleyball')) return 'Volleyball';

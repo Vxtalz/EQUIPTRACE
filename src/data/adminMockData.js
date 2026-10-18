@@ -158,4 +158,14 @@ export const INITIAL_ADMIN_EQUIPMENT_LIST = [
     status: 'Available',
     icon: '⚽',
   },
+  {
+    id: 'PE-031',
+    name: 'Table Tennis Paddle Set',
+    code: '#PE-031',
+    category: 'Table Tennis',
+    location: 'Rec Hall Storage',
+    condition: 'Excellent',
+    status: 'Available',
+    icon: '🏓',
+  },
 ];

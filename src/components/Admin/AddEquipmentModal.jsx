@@ -6,6 +6,7 @@ const DEFAULT_CATEGORY_ICONS = {
   'Basketball': '🏀',
   'Volleyball': '🏐',
   'Tennis': '🎾',
+  'Table Tennis': '🏓',
   'Track and Field': '🏃',
   'Football': '⚽',
   'Sepak Takraw': '🏐',
