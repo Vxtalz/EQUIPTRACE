@@ -29,66 +29,65 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
   font-family: var(--font-main);
-  background-color: #0F172A;
+  background-color: #FFFFFF;
   color: var(--text-dark);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow-x: hidden;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+/* Hide all scrollbars system-wide for native mobile experience */
+*, *::before, *::after {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 #root {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 16px;
-}
-
-/* Container & Frame Modes */
-.app-viewport-wrapper {
-  width: 100%;
-  max-width: 420px;
+  height: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  overflow: hidden;
+}
+
+/* Full Screen Native Mobile Viewport */
+.app-viewport-wrapper {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   position: relative;
+  overflow: hidden;
 }
 
 .device-frame-toggle-bar {
-  display: none;
-}
-
-.device-frame-toggle-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-}
-
-.device-frame-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  display: none !important;
 }
 
 .mobile-device-shell {
   width: 100%;
-  width: 390px;
-  height: 844px;
+  height: 100%;
+  flex: 1;
   background-color: #FFFFFF;
-  border-radius: 44px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 10px #1E293B, 0 0 0 12px #334155;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
   overflow: hidden;
   position: relative;
   display: flex;
@@ -97,36 +96,15 @@ body {
 
 .mobile-device-shell.full-view {
   width: 100%;
-  max-width: 480px;
-  height: 90vh;
-  max-height: 860px;
-  border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  max-width: 100%;
+  height: 100%;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
-/* Status Bar */
+/* Status Bar hidden - native phone status bar is used */
 .status-bar {
-  height: 44px;
-  padding: 12px 24px 0 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--text-dark);
-  z-index: 50;
-  background: transparent;
-  user-select: none;
-}
-
-.status-bar.dark-theme {
-  color: #FFFFFF;
-}
-
-.status-bar-icons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: none !important;
 }
 
 /* Main Content Area inside Mobile Screen */

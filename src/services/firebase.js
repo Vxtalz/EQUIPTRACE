@@ -27,7 +27,7 @@ import {
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore';
-import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
 
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDRBbSAjN429QMjsSOc11eIXD9iTczYa-g",
@@ -45,12 +45,12 @@ export const auth = getAuth(app);
 export const db   = getFirestore(app);
 
 let messaging = null;
-try {
-  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-    messaging = getMessaging(app);
-  }
-} catch (e) {
-  console.warn('FCM init:', e.message);
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  isSupported().then((supported) => {
+    if (supported) {
+      messaging = getMessaging(app);
+    }
+  }).catch(() => {});
 }
 
 export {

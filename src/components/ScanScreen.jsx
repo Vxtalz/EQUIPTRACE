@@ -9,36 +9,48 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Initialize and start device camera
-  useEffect(() => {
-    const html5QrCode = new Html5Qrcode('qr-reader-container');
-    scannerRef.current = html5QrCode;
-
-    const qrCodeSuccessCallback = (decodedText) => {
-      handleScannedContent(decodedText);
-    };
-
-    const config = {
-      fps: 15,
-      qrbox: { width: 220, height: 220 },
-      aspectRatio: 1.0
-    };
-
-    html5QrCode.start(
-      { facingMode: 'environment' },
-      config,
-      qrCodeSuccessCallback,
-      () => {
-        // scan failure/ongoing frame search, ignore
+  const startCamera = async () => {
+    setErrorMsg('');
+    setCameraError(null);
+    try {
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5Qrcode('qr-reader-container');
       }
-    ).then(() => {
+      const scanner = scannerRef.current;
+      if (scanner.isScanning) {
+        try {
+          await scanner.stop();
+        } catch (_) {}
+      }
+
+      const qrCodeSuccessCallback = (decodedText) => {
+        handleScannedContent(decodedText);
+      };
+
+      const config = {
+        fps: 15,
+        qrbox: { width: 220, height: 220 },
+        aspectRatio: 1.0,
+      };
+
+      await scanner.start(
+        { facingMode: 'environment' },
+        config,
+        qrCodeSuccessCallback,
+        () => {}
+      );
       setCameraActive(true);
       setCameraError(null);
-    }).catch((err) => {
+    } catch (err) {
       console.warn('Real camera start failed, fallback available:', err);
       setCameraActive(false);
-      setCameraError('Camera access unavailable or permission required.');
-    });
+      setCameraError('Camera access required. Tap below to enable.');
+    }
+  };
+
+  // Initialize and start device camera
+  useEffect(() => {
+    startCamera();
 
     return () => {
       if (scannerRef.current) {
@@ -94,17 +106,37 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
     }
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file || !scannerRef.current) return;
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    scannerRef.current.scanFile(file, true)
-      .then((decodedText) => {
-        handleScannedContent(decodedText);
-      })
-      .catch((err) => {
-        setErrorMsg('Could not find a valid QR code in that image.');
-      });
+    setErrorMsg('');
+
+    let wasScanning = false;
+    try {
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        wasScanning = true;
+        await scannerRef.current.stop();
+        setCameraActive(false);
+      }
+    } catch (stopErr) {
+      console.warn('Error pausing scanner for file scan:', stopErr);
+    }
+
+    try {
+      const fileScanner = new Html5Qrcode('qr-file-helper-container', false);
+      const decodedText = await fileScanner.scanFile(file, false);
+      try { await fileScanner.clear(); } catch (_) {}
+      handleScannedContent(decodedText);
+    } catch (err) {
+      console.warn('File QR scan error:', err);
+      setErrorMsg('No valid QR code was detected in that image. Please make sure the QR code is clearly visible.');
+      if (wasScanning) {
+        startCamera();
+      }
+    } finally {
+      if (e.target) e.target.value = '';
+    }
   };
 
   const handleTypedFind = (e) => {
@@ -203,7 +235,10 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
             }} 
           />
 
-          {/* Fallback View if camera permission denied or running in restricted emulator */}
+          {/* Hidden helper container for scanning gallery QR images without camera conflict */}
+          <div id="qr-file-helper-container" style={{ display: 'none' }} />
+
+          {/* Fallback View if camera permission denied or waiting for grant */}
           {!cameraActive && (
             <div style={{
               position: 'absolute',
@@ -215,15 +250,38 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
               backgroundColor: '#1E2536',
               padding: '20px',
               textAlign: 'center',
-              gap: '10px'
+              gap: '10px',
+              zIndex: 5
             }}>
               <Camera size={40} color="#60A5FA" />
               <span style={{ fontSize: '0.85rem', color: '#E2E8F0', fontWeight: '600' }}>
-                Camera Feed
+                Camera Scanner
               </span>
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-                {cameraError || 'Requesting camera permissions...'}
+              <span style={{ fontSize: '0.75rem', color: '#94A3B8', maxWidth: '200px', lineHeight: '1.4' }}>
+                {cameraError || 'Tap button below to start the camera.'}
               </span>
+              <button
+                type="button"
+                onClick={startCamera}
+                style={{
+                  marginTop: '8px',
+                  backgroundColor: '#1D61E7',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '9999px',
+                  padding: '8px 18px',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(29,97,231,0.35)'
+                }}
+              >
+                <RefreshCw size={14} />
+                <span>Enable Camera</span>
+              </button>
             </div>
           )}
 

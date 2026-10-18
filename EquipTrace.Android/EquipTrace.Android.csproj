@@ -17,19 +17,15 @@
     <PublishTrimmed>false</PublishTrimmed>
     <RunAOTCompilation>false</RunAOTCompilation>
 
+    <!-- Prevent AAPT from compressing assets so large JS bundles and images can be read without size limits -->
+    <AndroidAapt2NoCompress>js;css;png;svg;html;json;woff;woff2;ttf;ico</AndroidAapt2NoCompress>
+
     <NuGetAudit>false</NuGetAudit>
     <NoWarn>$(NoWarn);NU1900;CA1422;NETSDK1202</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <AndroidAsset Include="Assets\**\*" />
+    <!-- Directly include all built web assets from dist as AndroidAssets under www/ -->
+    <AndroidAsset Include="..\dist\**\*" Link="www\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
-
-  <!-- Automatically sync built web assets from the main project before build -->
-  <Target Name="SyncWebAssets" BeforeTargets="BeforeBuild">
-    <ItemGroup>
-      <DistFiles Include="..\dist\**\*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(DistFiles)" DestinationFolder="Assets\www\%(RecursiveDir)" SkipUnchangedFiles="true" />
-  </Target>
 </Project>

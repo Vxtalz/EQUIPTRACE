@@ -1,14 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Home,
   Scan,
-  FileText,
   User,
-  Wifi,
-  Battery,
-  Signal,
-  Smartphone,
-  Maximize2,
   LayoutGrid,
   Package,
   ListFilter,
@@ -32,70 +26,17 @@ export default function MobileFrameWrapper({
   activePushBanner = null,
   onDismissPushBanner,
 }) {
-  const [currentTime, setCurrentTime] = useState('9:41');
-  const [isFullView, setIsFullView] = useState(false);
-
-  useEffect(() => {
-    const updateTime = () => {
-      const d = new Date();
-      const hours = d.getHours() % 12 || 12;
-      const mins = d.getMinutes().toString().padStart(2, '0');
-      setCurrentTime(`${hours}:${mins}`);
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="app-viewport-wrapper">
-      {/* View Toggle Bar */}
-      <div className="device-frame-toggle-bar">
-        <span style={{ fontWeight: '600' }}>
-          EQUIPTRACE {userRole === 'Admin' ? 'Admin UI' : 'Student UI'}
-        </span>
-        <button
-          type="button"
-          className="device-frame-toggle-btn"
-          onClick={() => setIsFullView(!isFullView)}
-        >
-          {isFullView ? <Smartphone size={14} /> : <Maximize2 size={14} />}
-          {isFullView ? 'Mobile Frame View' : 'Full Screen View'}
-        </button>
-      </div>
-
-      {/* Mobile Device Shell */}
-      <div className={`mobile-device-shell ${isFullView ? 'full-view' : ''}`}>
-        {/* Status Bar */}
-        <div className={`status-bar ${darkStatusBar ? 'dark-theme' : ''}`}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>{currentTime}</span>
-            {activePushBanner && (
-              <span
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#1D61E7',
-                  display: 'inline-block',
-                }}
-              />
-            )}
-          </div>
-          <div className="status-bar-icons">
-            <Signal size={14} strokeWidth={2.5} />
-            <Wifi size={14} strokeWidth={2.5} />
-            <Battery size={16} strokeWidth={2.5} />
-          </div>
-        </div>
-
+      {/* Mobile Device Shell - Full Screen Native Layout */}
+      <div className="mobile-device-shell full-view">
         {/* ── Slide-down Phone Notification Banner ── */}
         {activePushBanner && (
           <div
             onClick={onDismissPushBanner}
             style={{
               position: 'absolute',
-              top: '42px',
+              top: '12px',
               left: '12px',
               right: '12px',
               zIndex: 120,
