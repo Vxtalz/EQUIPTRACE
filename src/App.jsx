@@ -129,14 +129,13 @@ export default function App() {
           setIsLoggedIn(true);
           const email = user.email || '';
 
-          // Strictly identify Admin accounts
-          const isAdmin =
+          // Strictly identify Admin accounts by email pattern
+          const isAdminEmail =
             email.toLowerCase().includes('@equiptrace-admin.edu') ||
             email.toLowerCase().startsWith('admin@') ||
             email.toLowerCase() === 'admin@gmail.com';
 
-          const userRoleResolved = isAdmin ? 'Admin' : 'Student';
-          setUserRole(userRoleResolved);
+          let userRoleResolved = isAdminEmail ? 'Admin' : 'Student';
 
           // Safely load profile from Firestore with timeout protection
           try {
@@ -146,9 +145,18 @@ export default function App() {
             ]);
 
             if (profile) {
+              // Strict enforcement: Student accounts are NEVER permitted as Admin
+              if (profile.role === 'Student') {
+                userRoleResolved = 'Student';
+              } else if (profile.role === 'Admin') {
+                userRoleResolved = 'Admin';
+              }
+
+              const displayName = profile.name || (profile.firstName && profile.surname ? `${profile.firstName} ${profile.surname}` : user.displayName) || profile.studentId || user.email?.split('@')[0] || 'Student';
+
               setStudent({
                 id: profile.studentId || user.email?.split('@')[0] || '2025-001',
-                name: profile.name || user.displayName || profile.studentId || user.email?.split('@')[0] || 'Student',
+                name: displayName,
                 course: profile.course || 'BS Physical Education',
                 yearLevel: profile.yearLevel || '3rd Year',
                 email: user.email,
@@ -173,6 +181,7 @@ export default function App() {
             }));
           }
 
+          setUserRole(userRoleResolved);
           attachFirestoreListeners(user, userRoleResolved);
         } else {
           // Logged out — clean up
@@ -281,28 +290,44 @@ export default function App() {
   }, [adminEquipment, userRole]);
 
   // ── Login callback (called by LoginScreen after Firebase Auth succeeds) ───────
-  const handleLogin = async ({ role, studentId, uid, email }) => {
+  const handleLogin = async ({ role, studentId, uid, email, profileData }) => {
     localStorage.setItem('equiptrace_role', role);
     setUserRole(role);
     setIsLoggedIn(true);
     setCurrentTab('home');
-    triggerToast(role === 'Admin' ? 'Logged in as Admin' : `Welcome, ${studentId}!`);
 
-    setStudent((prev) => ({
-      ...prev,
-      id: studentId || prev.id,
-      name: studentId || prev.name,
-      email: email || prev.email,
-    }));
+    if (profileData) {
+      const displayName =
+        profileData.name ||
+        (profileData.firstName && profileData.surname
+          ? `${profileData.firstName} ${profileData.surname}`
+          : profileData.studentId || studentId);
 
-    // Ensure user profile doc exists and records the role
-    if (uid) {
-      await upsertUserProfile(uid, {
-        studentId,
-        name: studentId,
-        email,
-        role,
+      triggerToast(role === 'Admin' ? 'Logged in as Admin' : `Welcome, ${profileData.firstName || displayName}!`);
+      setStudent({
+        id: profileData.studentId || studentId,
+        name: displayName,
+        course: profileData.course || 'BS Physical Education',
+        yearLevel: profileData.yearLevel || '3rd Year',
+        email: email || profileData.email,
       });
+    } else {
+      triggerToast(role === 'Admin' ? 'Logged in as Admin' : `Welcome, ${studentId}!`);
+      setStudent((prev) => ({
+        ...prev,
+        id: studentId || prev.id,
+        name: studentId || prev.name,
+        email: email || prev.email,
+      }));
+
+      // Only upsert basic role/id if profile didn't exist yet
+      if (uid) {
+        await upsertUserProfile(uid, {
+          studentId,
+          email,
+          role,
+        });
+      }
     }
   };
 

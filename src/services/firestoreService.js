@@ -433,3 +433,22 @@ export async function getUserProfile(uid) {
   const snap = await getDoc(doc(db, 'users', uid));
   return snap.exists() ? { firestoreId: snap.id, ...snap.data() } : null;
 }
+
+/** Find a user by their registered studentId */
+export async function findUserByStudentId(studentId) {
+  if (!studentId) return null;
+  const trimmed = studentId.trim();
+  const q = query(collection(db, 'users'), where('studentId', '==', trimmed));
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    const docSnap = snap.docs[0];
+    return { firestoreId: docSnap.id, ...docSnap.data() };
+  }
+  return null;
+}
+
+/** Check if a studentId is already registered in the database */
+export async function isStudentIdRegistered(studentId) {
+  const user = await findUserByStudentId(studentId);
+  return !!user;
+}

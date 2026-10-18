@@ -9,6 +9,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   sendPasswordResetEmail,
+  updateProfile,
 } from 'firebase/auth';
 import {
   getFirestore,
@@ -63,6 +64,7 @@ export {
   reauthenticateWithCredential,
   EmailAuthProvider,
   sendPasswordResetEmail,
+  updateProfile,
   // Firestore helpers
   collection,
   doc,
