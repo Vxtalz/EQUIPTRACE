@@ -76,7 +76,7 @@ export default function EquipmentDetailModal({
     return (
       <div
         style={{
-          position: 'fixed',
+          position: 'absolute',
           inset: 0,
           backgroundColor: '#FFFFFF',
           zIndex: 110,
@@ -84,7 +84,7 @@ export default function EquipmentDetailModal({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '32px 24px',
+          padding: '44px 24px 32px 24px',
           animation: 'fadeIn 0.25s ease',
           boxSizing: 'border-box',
         }}
@@ -207,7 +207,7 @@ export default function EquipmentDetailModal({
         if (e.target === e.currentTarget && onClose) onClose();
       }}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         inset: 0,
         backgroundColor: 'rgba(15, 30, 54, 0.65)',
         zIndex: 100,
@@ -231,7 +231,7 @@ export default function EquipmentDetailModal({
           flexDirection: 'column',
           gap: '16px',
           boxShadow: '0 -10px 30px rgba(0,0,0,0.2)',
-          maxHeight: '90vh',
+          maxHeight: '92%',
           overflowY: 'auto',
           boxSizing: 'border-box',
         }}
