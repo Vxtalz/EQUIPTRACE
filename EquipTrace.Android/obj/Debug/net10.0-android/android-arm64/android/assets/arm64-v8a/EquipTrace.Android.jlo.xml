@@ -1,0 +1,35 @@
+<api>
+  <jcw-types>
+    <type name="MainActivity" package="crc64e775cd29a265b5cb" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="android.app.Activity" partial_assembly_qualified_name="EquipTrace.Android.MainActivity, EquipTrace.Android">
+      <constructors>
+        <constructor name="MainActivity" method="n_.ctor:()V:" jni_signature="()V" managed_parameters="" retval="void" is_dynamically_registered="True" />
+      </constructors>
+      <methods>
+        <method name="onCreate" method="n_onCreate:(Landroid/os/Bundle;)V:GetOnCreate_Landroid_os_Bundle_Handler" jni_signature="(Landroid/os/Bundle;)V" params="android.os.Bundle p0" retval="void" is_dynamically_registered="True" super_call="p0" activate_call="p0" />
+        <method name="onKeyDown" method="n_onKeyDown:(ILandroid/view/KeyEvent;)Z:GetOnKeyDown_ILandroid_view_KeyEvent_Handler" jni_signature="(ILandroid/view/KeyEvent;)Z" params="int p0, android.view.KeyEvent p1" retval="boolean" is_dynamically_registered="True" super_call="p0, p1" activate_call="p0, p1" />
+      </methods>
+    </type>
+    <type name="EquipTraceWebViewClient" package="crc64e775cd29a265b5cb" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="android.webkit.WebViewClient" partial_assembly_qualified_name="EquipTrace.Android.EquipTraceWebViewClient, EquipTrace.Android">
+      <constructors>
+        <constructor name="EquipTraceWebViewClient" method="n_.ctor:()V:" jni_signature="()V" managed_parameters="" retval="void" is_dynamically_registered="True" />
+      </constructors>
+      <methods>
+        <method name="shouldOverrideUrlLoading" method="n_shouldOverrideUrlLoading:(Landroid/webkit/WebView;Landroid/webkit/WebResourceRequest;)Z:GetShouldOverrideUrlLoading_Landroid_webkit_WebView_Landroid_webkit_WebResourceRequest_Handler" jni_signature="(Landroid/webkit/WebView;Landroid/webkit/WebResourceRequest;)Z" params="android.webkit.WebView p0, android.webkit.WebResourceRequest p1" retval="boolean" is_dynamically_registered="True" super_call="p0, p1" activate_call="p0, p1" />
+      </methods>
+    </type>
+    <type name="EquipTraceWebChromeClient" package="crc64e775cd29a265b5cb" application_java_class="android.app.Application" mono_runtime_initialization="mono.MonoPackageManager.LoadApplication (context);" extends_type="android.webkit.WebChromeClient" partial_assembly_qualified_name="EquipTrace.Android.EquipTraceWebChromeClient, EquipTrace.Android">
+      <constructors>
+        <constructor name="EquipTraceWebChromeClient" method="n_.ctor:()V:" jni_signature="()V" managed_parameters="" retval="void" is_dynamically_registered="True" />
+        <constructor name="EquipTraceWebChromeClient" method="n_.ctor:(Landroid/app/Activity;)V:" jni_signature="(Landroid/app/Activity;)V" managed_parameters="Android.App.Activity, Mono.Android" params="android.app.Activity p0" retval="void" is_dynamically_registered="True" super_call="" activate_call="p0" />
+      </constructors>
+      <methods>
+        <method name="onPermissionRequest" method="n_onPermissionRequest:(Landroid/webkit/PermissionRequest;)V:GetOnPermissionRequest_Landroid_webkit_PermissionRequest_Handler" jni_signature="(Landroid/webkit/PermissionRequest;)V" params="android.webkit.PermissionRequest p0" retval="void" is_dynamically_registered="True" super_call="p0" activate_call="p0" />
+      </methods>
+    </type>
+  </jcw-types>
+  <acw-types partial-assembly-name="EquipTrace.Android" module-name="EquipTrace.Android.dll">
+    <type assembly-qualified-name="EquipTrace.Android.MainActivity, EquipTrace.Android, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="equiptrace.android.MainActivity" java-key="crc64e775cd29a265b5cb.MainActivity" managed-key="EquipTrace.Android.MainActivity" partial-assembly-qualified-name="EquipTrace.Android.MainActivity, EquipTrace.Android" />
+    <type assembly-qualified-name="EquipTrace.Android.EquipTraceWebViewClient, EquipTrace.Android, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="equiptrace.android.EquipTraceWebViewClient" java-key="crc64e775cd29a265b5cb.EquipTraceWebViewClient" managed-key="EquipTrace.Android.EquipTraceWebViewClient" partial-assembly-qualified-name="EquipTrace.Android.EquipTraceWebViewClient, EquipTrace.Android" />
+    <type assembly-qualified-name="EquipTrace.Android.EquipTraceWebChromeClient, EquipTrace.Android, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" compat-jni-name="equiptrace.android.EquipTraceWebChromeClient" java-key="crc64e775cd29a265b5cb.EquipTraceWebChromeClient" managed-key="EquipTrace.Android.EquipTraceWebChromeClient" partial-assembly-qualified-name="EquipTrace.Android.EquipTraceWebChromeClient, EquipTrace.Android" />
+  </acw-types>
+</api>
