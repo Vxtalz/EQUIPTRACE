@@ -150,7 +150,19 @@ export default function BorrowingsScreen({
                       }}>
                         {item.id}
                       </span>
-                      {item.status === 'Return Pending' ? (
+                      {item.status === 'Pending Approval' ? (
+                        <span style={{
+                          fontSize: '0.75rem',
+                          fontWeight: '800',
+                          color: '#B45309',
+                          backgroundColor: '#FEF3C7',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          border: '1px solid #FDE68A'
+                        }}>
+                          Pending Approval
+                        </span>
+                      ) : item.status === 'Return Pending' ? (
                         <span style={{
                           fontSize: '0.75rem',
                           fontWeight: '800',
@@ -190,23 +202,34 @@ export default function BorrowingsScreen({
                 </div>
 
                 <div style={{
-                  backgroundColor: item.status === 'Return Pending' ? '#FFFBEB' : '#F8FAFC',
+                  backgroundColor: item.status === 'Return Pending' || item.status === 'Pending Approval' ? '#FFFBEB' : '#F8FAFC',
                   borderRadius: '10px',
                   padding: '10px 12px',
                   display: 'flex',
                   justifyContent: 'space-between',
                   fontSize: '0.8rem',
-                  border: item.status === 'Return Pending' ? '1px solid #FDE68A' : 'none',
+                  border: item.status === 'Return Pending' || item.status === 'Pending Approval' ? '1px solid #FDE68A' : 'none',
                 }}>
                   <span style={{ color: '#64748B', fontWeight: '500' }}>
-                    {item.status === 'Return Pending' ? 'Return Status:' : 'Return Due:'}
+                    {item.status === 'Pending Approval'
+                      ? 'Request Status:'
+                      : item.status === 'Return Pending'
+                      ? 'Return Status:'
+                      : 'Return Due:'}
                   </span>
-                  <span style={{ color: item.status === 'Return Pending' ? '#B45309' : '#0F1E36', fontWeight: '700' }}>
-                    {item.status === 'Return Pending' ? 'Handed in · Awaiting Inspection' : 'Today before 5:00 PM'}
+                  <span style={{
+                    color: item.status === 'Return Pending' || item.status === 'Pending Approval' ? '#B45309' : '#0F1E36',
+                    fontWeight: '700'
+                  }}>
+                    {item.status === 'Pending Approval'
+                      ? 'Awaiting Admin Approval'
+                      : item.status === 'Return Pending'
+                      ? 'Handed in · Awaiting Inspection'
+                      : 'Today before 5:00 PM'}
                   </span>
                 </div>
 
-                {item.status === 'Return Pending' ? (
+                {item.status === 'Pending Approval' ? (
                   <div
                     style={{
                       width: '100%',
@@ -224,7 +247,27 @@ export default function BorrowingsScreen({
                     }}
                   >
                     <Clock size={16} />
-                    Pending Admin Approval
+                    Awaiting Staff Sign-off
+                  </div>
+                ) : item.status === 'Return Pending' ? (
+                  <div
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      backgroundColor: '#FEF3C7',
+                      color: '#B45309',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      border: '1px solid #FDE68A',
+                    }}
+                  >
+                    <Clock size={16} />
+                    Pending Return Inspection
                   </div>
                 ) : (
                   <button
@@ -238,7 +281,7 @@ export default function BorrowingsScreen({
                       backgroundColor: '#EEF4FF',
                       color: '#1D61E7',
                       fontWeight: '700',
-                      fontSize: '0.875rem',
+                      fontSize: '0.85rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',

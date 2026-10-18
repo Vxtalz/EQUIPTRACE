@@ -104,6 +104,13 @@ export async function addBorrowing(record) {
   return ref.id;
 }
 
+export async function updateBorrowing(firestoreId, fields) {
+  await updateDoc(doc(db, 'borrowings', firestoreId), {
+    ...fields,
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function deleteBorrowing(firestoreId) {
   await deleteDoc(doc(db, 'borrowings', firestoreId));
 }

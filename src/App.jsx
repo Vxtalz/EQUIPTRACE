@@ -32,9 +32,11 @@ import {
   subscribeTransactions,
   subscribeNotifications,
   addBorrowing,
+  updateBorrowing,
   deleteBorrowing,
   addHistory,
   updateEquipment,
+  addRequest,
   updateRequest,
   submitReturnPending,
   approveReturnSubmission,
@@ -314,8 +316,11 @@ export default function App() {
   const handleConfirmBorrow = async (equipment) => {
     if (!authUser) return;
 
+    const borrowId = `BORROW-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // 1. Create Borrowing record with status 'Pending Approval'
     const borrowRecord = {
-      borrowId:    `BORROW-${Math.floor(1000 + Math.random() * 9000)}`,
+      borrowId,
       id:          equipment.id,
       name:        equipment.name,
       category:    equipment.category,
@@ -323,27 +328,55 @@ export default function App() {
       location:    equipment.location || '',
       borrowedTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       studentId:   authUser.uid,
-      studentName: student.name,
+      studentName: student.name || 'Student',
+      status:      'Pending Approval',
     };
 
-    // Write to Firestore
-    await addBorrowing(borrowRecord);
+    const borrowingDocId = await addBorrowing(borrowRecord);
 
-    // Decrement available count on equipment doc
-    if (equipment.firestoreId) {
-      await updateEquipment(equipment.firestoreId, {
-        available: Math.max(0, (equipment.available || 1) - 1),
-      });
-    }
+    // 2. Submit formal Request into the Admin 'requests' collection
+    const reqRecord = {
+      id:              `REQ-${Date.now()}`,
+      borrowingDocId:  borrowingDocId || '',
+      borrowId:        borrowId,
+      studentId:       student.id || authUser.email?.split('@')[0] || '2025-001',
+      studentUid:      authUser.uid,
+      studentName:     student.name || 'Student',
+      studentInitials: (student.name || 'Student')
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase(),
+      equipmentId:     equipment.id,
+      equipmentDocId:  equipment.firestoreId || '',
+      equipmentName:   equipment.name,
+      equipmentCode:   equipment.code || equipment.id,
+      icon:            equipment.name?.toLowerCase().includes('volley') ? '🏐' : equipment.name?.toLowerCase().includes('basket') ? '🏀' : '⚽',
+      requestedDate:   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      returnBy:        'Today, 5:00 PM',
+      status:          'Pending',
+    };
 
-    // Notification
+    await addRequest(reqRecord);
+
+    // 3. Student Notification
     const notifPayload = {
       studentId: authUser.uid,
-      title:     'Equipment Borrowed',
-      message:   `You borrowed ${equipment.name} (${equipment.id}). Due today at 5:00 PM.`,
+      title:     'Borrow Request Submitted',
+      message:   `Your request for ${equipment.name} (${equipment.id}) was sent. Awaiting admin approval.`,
       time:      'Just now',
     };
     await addNotification(notifPayload);
+
+    // 4. Admin Push Notification in database
+    await addNotification({
+      studentId: 'admin',
+      title:     'New Borrow Request',
+      message:   `${student.name || 'Student'} requested ${equipment.name} (${equipment.id}).`,
+      time:      'Just now',
+      category:  'request',
+    });
 
     // Trigger Phone Status Bar Push Banner
     triggerPushBanner(notifPayload);
@@ -352,7 +385,7 @@ export default function App() {
     setShowBrowse(false);
     setCurrentTab('borrowings');
     try { confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } }); } catch (e) {}
-    triggerToast(`Successfully borrowed ${equipment.name}!`);
+    triggerToast(`Borrow request submitted for ${equipment.name}! Awaiting admin approval.`);
   };
 
   // ── Student: Submit Return (enters 'Return Pending') ────────────────────────
@@ -402,7 +435,7 @@ export default function App() {
     triggerToast(`Held ${flagData.equipmentName || 'item'} for physical inspection`);
   };
 
-  // ── Admin: Approve ────────────────────────────────────────────────────────────
+  // ── Admin: Approve Borrowing Request ──────────────────────────────────────────
   const handleApproveAdminRequest = async (reqId) => {
     const req = adminRequests.find((r) => r.id === reqId || r.firestoreId === reqId);
     if (!req) return;
@@ -410,26 +443,47 @@ export default function App() {
     const fsId = req.firestoreId;
     if (fsId) await updateRequest(fsId, { status: 'Approved' });
 
-    const today = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
-    await addTransaction({
-      id:               `TX-${Date.now()}`,
-      studentName:      req.studentName,
-      studentInitials:  req.studentInitials || req.studentName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase(),
-      equipment:        `${req.equipmentName} ${req.equipmentCode}`,
-      date:             today,
-      status:           'Borrowed',
-    });
+    // 1. Activate the student's active borrowing
+    if (req.borrowingDocId) {
+      await updateBorrowing(req.borrowingDocId, { status: 'Active' });
+    } else if (req.borrowId) {
+      const match = borrowings.find((b) => b.borrowId === req.borrowId);
+      if (match?.firestoreId) {
+        await updateBorrowing(match.firestoreId, { status: 'Active' });
+      }
+    }
 
-    // Decrement equipment available
+    // 2. Decrement equipment available in Firestore
     const eq = adminEquipment.find((e) => e.id === req.equipmentId);
     if (eq?.firestoreId) {
       await updateEquipment(eq.firestoreId, { available: Math.max(0, (eq.available || 0) - 1) });
     }
 
+    // 3. Record transaction in ledger
+    const today = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
+    await addTransaction({
+      id:               `TX-${Date.now()}`,
+      studentName:      req.studentName,
+      studentInitials:  req.studentInitials || req.studentName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase(),
+      equipment:        `${req.equipmentName} ${req.equipmentCode || ''}`,
+      date:             today,
+      status:           'Borrowed',
+    });
+
+    // 4. Send notification to the student
+    if (req.studentUid) {
+      await addNotification({
+        studentId: req.studentUid,
+        title:     'Borrow Request Approved!',
+        message:   `Your request for ${req.equipmentName} was approved. You can pick it up at the equipment room.`,
+        time:      'Just now',
+      });
+    }
+
     triggerToast(`Request for ${req.equipmentName} Approved`);
   };
 
-  // ── Admin: Reject ─────────────────────────────────────────────────────────────
+  // ── Admin: Reject Borrowing Request ───────────────────────────────────────────
   const handleRejectAdminRequest = async (reqId) => {
     const req = adminRequests.find((r) => r.id === reqId || r.firestoreId === reqId);
     if (!req) return;
@@ -437,15 +491,36 @@ export default function App() {
     const fsId = req.firestoreId;
     if (fsId) await updateRequest(fsId, { status: 'Rejected' });
 
+    // 1. Remove the pending borrowing record from student's active list
+    if (req.borrowingDocId) {
+      await deleteBorrowing(req.borrowingDocId);
+    } else if (req.borrowId) {
+      const match = borrowings.find((b) => b.borrowId === req.borrowId);
+      if (match?.firestoreId) {
+        await deleteBorrowing(match.firestoreId);
+      }
+    }
+
+    // 2. Record transaction in ledger
     const today = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
     await addTransaction({
       id:               `TX-${Date.now()}`,
       studentName:      req.studentName,
       studentInitials:  req.studentInitials || req.studentName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase(),
-      equipment:        `${req.equipmentName} ${req.equipmentCode}`,
+      equipment:        `${req.equipmentName} ${req.equipmentCode || ''}`,
       date:             today,
       status:           'Rejected',
     });
+
+    // 3. Send notification to the student
+    if (req.studentUid) {
+      await addNotification({
+        studentId: req.studentUid,
+        title:     'Borrow Request Declined',
+        message:   `Your request for ${req.equipmentName} was declined by the administrator.`,
+        time:      'Just now',
+      });
+    }
 
     triggerToast(`Request for ${req.equipmentName} Rejected`);
   };
