@@ -859,6 +859,7 @@ export default function App() {
               onRejectRequest={handleRejectAdminRequest}
               onNavigateTab={(tab) => setCurrentTab(tab)}
               onOpenNotifications={() => setShowNotifications(true)}
+              onOpenSettings={() => setCurrentTab('more')}
               unreadCount={unreadNotifCount}
             />
           )}
@@ -867,6 +868,7 @@ export default function App() {
               equipmentList={adminEquipment}
               onOpenAddModal={() => setShowAddEquipmentModal(true)}
               onOpenNotifications={() => setShowNotifications(true)}
+              onOpenSettings={() => setCurrentTab('more')}
               unreadCount={unreadNotifCount}
             />
           )}
@@ -876,6 +878,7 @@ export default function App() {
               onApproveRequest={handleApproveAdminRequest}
               onRejectRequest={handleRejectAdminRequest}
               onOpenNotifications={() => setShowNotifications(true)}
+              onOpenSettings={() => setCurrentTab('more')}
               unreadCount={unreadNotifCount}
             />
           )}
@@ -889,6 +892,7 @@ export default function App() {
               onFlagInspection={handleFlagInspection}
               adminUser={authUser}
               onOpenNotifications={() => setShowNotifications(true)}
+              onOpenSettings={() => setCurrentTab('more')}
               unreadCount={unreadNotifCount}
             />
           )}
@@ -898,6 +902,7 @@ export default function App() {
               equipmentList={adminEquipment}
               transactions={adminRecentTx}
               onOpenNotifications={() => setShowNotifications(true)}
+              onOpenSettings={() => setCurrentTab('more')}
               unreadCount={unreadNotifCount}
             />
           )}

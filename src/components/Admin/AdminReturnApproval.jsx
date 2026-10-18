@@ -15,6 +15,7 @@ import {
   AlertCircle,
   HelpCircle,
   Bell,
+  Settings,
 } from 'lucide-react';
 import equiptraceLogo from '../../assets/equiptrace-logo.png';
 
@@ -27,6 +28,7 @@ export default function AdminReturnApproval({
   onFlagInspection,
   adminUser,
   onOpenNotifications,
+  onOpenSettings,
   unreadCount = 0,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -296,6 +298,25 @@ export default function AdminReturnApproval({
                   }}
                 />
               )}
+            </button>
+
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              style={{
+                position: 'relative',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              aria-label="Settings & More"
+              title="Settings & More"
+            >
+              <Settings size={24} color="#1D61E7" strokeWidth={2.2} />
             </button>
           </div>
         </div>

@@ -13,7 +13,6 @@ import {
   Package,
   ListFilter,
   BarChart3,
-  MoreHorizontal,
   Bell,
   RotateCcw,
   Clock
@@ -208,7 +207,7 @@ export default function MobileFrameWrapper({
                   title="Overview"
                   className={`floating-nav-btn ${currentTab === 'home' ? 'active' : ''}`}
                   onClick={() => onNavigate('home')}
-                  style={{ flex: 1, maxWidth: '54px' }}
+                  style={{ flex: 1, maxWidth: '64px' }}
                 >
                   <LayoutGrid size={20} strokeWidth={currentTab === 'home' ? 2.5 : 2} />
                 </button>
@@ -218,7 +217,7 @@ export default function MobileFrameWrapper({
                   title="Equipment Inventory"
                   className={`floating-nav-btn ${currentTab === 'equipment' ? 'active' : ''}`}
                   onClick={() => onNavigate('equipment')}
-                  style={{ flex: 1, maxWidth: '54px' }}
+                  style={{ flex: 1, maxWidth: '64px' }}
                 >
                   <Package size={20} strokeWidth={currentTab === 'equipment' ? 2.5 : 2} />
                 </button>
@@ -228,7 +227,7 @@ export default function MobileFrameWrapper({
                   title="Borrow Requests"
                   className={`floating-nav-btn ${currentTab === 'requests' ? 'active' : ''}`}
                   onClick={() => onNavigate('requests')}
-                  style={{ flex: 1, maxWidth: '54px', position: 'relative' }}
+                  style={{ flex: 1, maxWidth: '64px', position: 'relative' }}
                 >
                   <ListFilter size={20} strokeWidth={currentTab === 'requests' ? 2.5 : 2} />
                   {pendingRequestsCount > 0 && (
@@ -263,7 +262,7 @@ export default function MobileFrameWrapper({
                   title="Return Approval"
                   className={`floating-nav-btn ${currentTab === 'return-approval' ? 'active' : ''}`}
                   onClick={() => onNavigate('return-approval')}
-                  style={{ flex: 1, maxWidth: '54px', position: 'relative' }}
+                  style={{ flex: 1, maxWidth: '64px', position: 'relative' }}
                 >
                   <RotateCcw size={20} strokeWidth={currentTab === 'return-approval' ? 2.5 : 2} />
                   {pendingReturnsCount > 0 && (
@@ -297,19 +296,9 @@ export default function MobileFrameWrapper({
                   title="Analytics"
                   className={`floating-nav-btn ${currentTab === 'analytics' ? 'active' : ''}`}
                   onClick={() => onNavigate('analytics')}
-                  style={{ flex: 1, maxWidth: '54px' }}
+                  style={{ flex: 1, maxWidth: '64px' }}
                 >
                   <BarChart3 size={20} strokeWidth={currentTab === 'analytics' ? 2.5 : 2} />
-                </button>
-
-                <button
-                  type="button"
-                  title="Settings & More"
-                  className={`floating-nav-btn ${currentTab === 'more' ? 'active' : ''}`}
-                  onClick={() => onNavigate('more')}
-                  style={{ flex: 1, maxWidth: '54px' }}
-                >
-                  <MoreHorizontal size={20} strokeWidth={currentTab === 'more' ? 2.5 : 2} />
                 </button>
               </>
             )}

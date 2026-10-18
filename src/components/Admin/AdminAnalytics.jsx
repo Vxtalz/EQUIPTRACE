@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, BarChart2, AlertCircle, ArrowLeftRight } from 'lucide-react';
+import { Bell, BarChart2, AlertCircle, ArrowLeftRight, Settings } from 'lucide-react';
 import BorrowingTrendChart from './BorrowingTrendChart';
 import equiptraceLogo from '../../assets/equiptrace-logo.png';
 
@@ -8,6 +8,7 @@ export default function AdminAnalytics({
   equipmentList = [],
   transactions = [],
   onOpenNotifications,
+  onOpenSettings,
   unreadCount = 0,
 }) {
   const total = kpis.totalEquipment || equipmentList.length || 1;
@@ -56,35 +57,56 @@ export default function AdminAnalytics({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenNotifications}
-          style={{
-            position: 'relative',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          aria-label="Notifications"
-        >
-          <Bell size={24} color="#1D61E7" strokeWidth={2.2} />
-          {unreadCount > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '5px',
-              right: '5px',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              backgroundColor: '#EF4444',
-              border: '2px solid #FFFFFF'
-            }} />
-          )}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={onOpenNotifications}
+            style={{
+              position: 'relative',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            aria-label="Notifications"
+          >
+            <Bell size={24} color="#1D61E7" strokeWidth={2.2} />
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '5px',
+                right: '5px',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: '#EF4444',
+                border: '2px solid #FFFFFF',
+              }} />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            style={{
+              position: 'relative',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            aria-label="Settings & More"
+            title="Settings & More"
+          >
+            <Settings size={24} color="#1D61E7" strokeWidth={2.2} />
+          </button>
+        </div>
       </div>
 
       {/* Top Row Metric Cards matching Screenshot 1 */}

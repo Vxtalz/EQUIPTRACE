@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, QrCode, Search, FileText } from 'lucide-react';
+import { Bell, QrCode, Search, FileText, Settings } from 'lucide-react';
 import equiptraceLogo from '../assets/equiptrace-logo.png';
 
 export default function HomeScreen({
@@ -37,36 +37,57 @@ export default function HomeScreen({
           />
         </div>
 
-        {/* Notifications Icon Button */}
-        <button
-          type="button"
-          onClick={onOpenNotifications}
-          style={{
-            position: 'relative',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          aria-label="Notifications"
-        >
-          <Bell size={24} color="#1D61E7" strokeWidth={2.2} />
-          {unreadCount > 0 && (
-            <span style={{
-              position: 'absolute',
-              top: '5px',
-              right: '5px',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              backgroundColor: '#EF4444',
-              border: '2px solid #FFFFFF'
-            }} />
-          )}
-        </button>
+        {/* Header Action Buttons (Notifications & Settings) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            type="button"
+            onClick={onOpenNotifications}
+            style={{
+              position: 'relative',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            aria-label="Notifications"
+          >
+            <Bell size={24} color="#1D61E7" strokeWidth={2.2} />
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '5px',
+                right: '5px',
+                width: '10px',
+                height: '10px',
+                borderRadius: '50%',
+                backgroundColor: '#EF4444',
+                border: '2px solid #FFFFFF',
+              }} />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('profile')}
+            style={{
+              position: 'relative',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            aria-label="Settings & Profile"
+            title="Settings & Profile"
+          >
+            <Settings size={24} color="#1D61E7" strokeWidth={2.2} />
+          </button>
+        </div>
       </div>
 
       {/* Welcome Greeting */}
