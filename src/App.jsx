@@ -869,6 +869,7 @@ export default function App() {
               onBack={() => setCurrentTab('home')}
               onScanEquipment={handleScanEquipment}
               equipmentList={equipmentList}
+              isModalOpen={isAnyModalOpen}
             />
           )}
           {currentTab === 'borrowings' && (

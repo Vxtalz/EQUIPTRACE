@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, MoreVertical, Image as ImageIcon, Camera, RefreshCw } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
-export default function ScanScreen({ onBack, onScanEquipment, equipmentList = [] }) {
+export default function ScanScreen({ onBack, onScanEquipment, equipmentList = [], isModalOpen = false }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const scannerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const isProcessingRef = useRef(false);
 
   const startCamera = async () => {
     setErrorMsg('');
@@ -41,6 +42,7 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
       );
       setCameraActive(true);
       setCameraError(null);
+      isProcessingRef.current = false;
     } catch (err) {
       console.warn('Real camera start failed, fallback available:', err);
       setCameraActive(false);
@@ -63,7 +65,25 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
     };
   }, []);
 
+  // When modal closes, resume camera scanning smoothly without turning black
+  useEffect(() => {
+    if (!isModalOpen) {
+      isProcessingRef.current = false;
+      if (scannerRef.current) {
+        try {
+          scannerRef.current.resume();
+        } catch (_) {
+          if (!scannerRef.current.isScanning) {
+            startCamera();
+          }
+        }
+      }
+    }
+  }, [isModalOpen]);
+
   const handleScannedContent = (rawText) => {
+    if (isProcessingRef.current) return;
+
     let targetId = rawText.trim();
     try {
       const parsed = JSON.parse(rawText);
@@ -86,13 +106,24 @@ export default function ScanScreen({ onBack, onScanEquipment, equipmentList = []
     );
 
     if (matchedItem) {
+      isProcessingRef.current = true;
       setErrorMsg('');
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(() => {});
-      }
+
+      // Pause decoding and freeze the camera frame instead of stopping it (so the screen does NOT turn black)
+      try {
+        if (scannerRef.current && scannerRef.current.isScanning) {
+          scannerRef.current.pause(true);
+        }
+      } catch (e) {}
+
       onScanEquipment(matchedItem);
     } else {
       setErrorMsg(`Scanned: "${targetId}". Not recognized in inventory.`);
+      // Briefly debounce unrecognized scans so the camera continues streaming smoothly
+      isProcessingRef.current = true;
+      setTimeout(() => {
+        isProcessingRef.current = false;
+      }, 1500);
     }
   };
 
