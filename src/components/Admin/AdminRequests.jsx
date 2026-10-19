@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Bell,
   Settings,
@@ -31,6 +32,20 @@ export default function AdminRequests({
   const [dateFilter, setDateFilter] = useState('All Time'); // 'All Time' | 'Today' | 'Last 7 Days' | 'Last 30 Days'
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
+
+  // Lock background scroll when filter modal is open
+  useEffect(() => {
+    if (showFilterModal) {
+      const container = document.querySelector('.screen-container');
+      if (container) {
+        const prevOverflow = container.style.overflow;
+        container.style.overflow = 'hidden';
+        return () => {
+          container.style.overflow = prevOverflow;
+        };
+      }
+    }
+  }, [showFilterModal]);
 
   // Parse request date for chronological sorting and date filtering
   const parseItemDate = (item) => {
@@ -871,19 +886,21 @@ export default function AdminRequests({
       </div>
 
       {/* ── Filter Bottom Sheet / Modal ── */}
-      {showFilterModal && (
+      {showFilterModal && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => setShowFilterModal(false)}
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            zIndex: 1000,
+            zIndex: 9999,
             display: 'flex',
             alignItems: 'flex-end',
             justifyContent: 'center',
             backdropFilter: 'blur(3px)',
-            animation: 'fadeIn 0.2s ease'
+            animation: 'fadeIn 0.2s ease',
+            overscrollBehavior: 'contain',
+            touchAction: 'none',
           }}
         >
           <div
@@ -894,13 +911,14 @@ export default function AdminRequests({
               backgroundColor: '#FFFFFF',
               borderTopLeftRadius: '24px',
               borderTopRightRadius: '24px',
-              padding: '20px 22px 28px 22px',
+              padding: '20px 22px calc(24px + env(safe-area-inset-bottom, 16px)) 22px',
               display: 'flex',
               flexDirection: 'column',
               gap: '18px',
               boxShadow: '0 -10px 40px rgba(0,0,0,0.25)',
               maxHeight: '85vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
             {/* Modal Header */}
@@ -1036,7 +1054,8 @@ export default function AdminRequests({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Clearance spacer for floating bottom navigation bar */}

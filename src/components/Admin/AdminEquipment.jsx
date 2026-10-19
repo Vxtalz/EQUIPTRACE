@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Bell,
   Search,
@@ -24,6 +25,20 @@ export default function AdminEquipment({
   const [filter, setFilter] = useState('All'); // 'All' | 'Available' | 'Borrowed' | 'Overdue'
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
+
+  // Lock background scroll when modal is open to prevent page moving or cutoffs
+  useEffect(() => {
+    if (showFilterModal) {
+      const container = document.querySelector('.screen-container');
+      if (container) {
+        const prevOverflow = container.style.overflow;
+        container.style.overflow = 'hidden';
+        return () => {
+          container.style.overflow = prevOverflow;
+        };
+      }
+    }
+  }, [showFilterModal]);
 
   // Helper to count active borrowings for this equipment
   const getActiveBorrowCount = (item) => {
@@ -561,19 +576,21 @@ export default function AdminEquipment({
       </div>
 
       {/* ── Filter Bottom Sheet / Modal (Contains All, Available, Borrowed, Overdue) ── */}
-      {showFilterModal && (
+      {showFilterModal && typeof document !== 'undefined' && createPortal(
         <div
           onClick={() => setShowFilterModal(false)}
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            zIndex: 1000,
+            zIndex: 9999,
             display: 'flex',
             alignItems: 'flex-end',
             justifyContent: 'center',
             backdropFilter: 'blur(3px)',
-            animation: 'fadeIn 0.2s ease'
+            animation: 'fadeIn 0.2s ease',
+            overscrollBehavior: 'contain',
+            touchAction: 'none',
           }}
         >
           <div
@@ -584,13 +601,14 @@ export default function AdminEquipment({
               backgroundColor: '#FFFFFF',
               borderTopLeftRadius: '24px',
               borderTopRightRadius: '24px',
-              padding: '20px 22px 28px 22px',
+              padding: '20px 22px calc(24px + env(safe-area-inset-bottom, 16px)) 22px',
               display: 'flex',
               flexDirection: 'column',
               gap: '18px',
               boxShadow: '0 -10px 40px rgba(0,0,0,0.25)',
               maxHeight: '85vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
             {/* Modal Header */}
@@ -694,7 +712,8 @@ export default function AdminEquipment({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Clearance spacer for floating bottom navigation bar */}

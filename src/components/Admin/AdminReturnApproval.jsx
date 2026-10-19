@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   RotateCcw,
   Search,
@@ -43,6 +44,20 @@ export default function AdminReturnApproval({
   // Confirmation modal
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmActionType, setConfirmActionType] = useState('approve'); // 'approve' | 'flag'
+
+  // Lock background scroll when modal is open to prevent page moving or cutoffs
+  useEffect(() => {
+    if (selectedItem || showConfirmModal) {
+      const container = document.querySelector('.screen-container');
+      if (container) {
+        const prevOverflow = container.style.overflow;
+        container.style.overflow = 'hidden';
+        return () => {
+          container.style.overflow = prevOverflow;
+        };
+      }
+    }
+  }, [selectedItem, showConfirmModal]);
 
   // Merge active borrowings from borrowings collection + any active approved requests
   const activeBorrowedItems = [];
@@ -669,34 +684,41 @@ export default function AdminReturnApproval({
       <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
 
       {/* ── Inspect & Condition Assessment Modal ── */}
-      {selectedItem && !showConfirmModal && (
+      {selectedItem && !showConfirmModal && typeof document !== 'undefined' && createPortal(
         <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedItem(null);
+          }}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 100,
+            zIndex: 9999,
             backgroundColor: 'rgba(15,30,54,0.65)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'flex-end',
             justifyContent: 'center',
             animation: 'fadeIn 0.2s ease',
+            overscrollBehavior: 'contain',
+            touchAction: 'none',
           }}
         >
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: '#FFFFFF',
               width: '100%',
               maxWidth: '430px',
               borderTopLeftRadius: '24px',
               borderTopRightRadius: '24px',
-              padding: '24px 20px 32px 20px',
+              padding: '24px 20px calc(24px + env(safe-area-inset-bottom, 16px)) 20px',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px',
               maxHeight: '90vh',
               overflowY: 'auto',
-              boxShadow: '0 -10px 30px rgba(0,0,0,0.2)',
+              WebkitOverflowScrolling: 'touch',
+              boxShadow: '0 -10px 30px rgba(0,0,0,0.25)',
             }}
           >
             {/* Modal Header */}
@@ -901,17 +923,22 @@ export default function AdminReturnApproval({
                 Confirm Return
               </button>
             </div>
+            <div style={{ height: '8px', flexShrink: 0 }} />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Summary Confirmation Dialog ── */}
-      {showConfirmModal && selectedItem && (
+      {showConfirmModal && selectedItem && typeof document !== 'undefined' && createPortal(
         <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowConfirmModal(false);
+          }}
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 110,
+            zIndex: 10000,
             backgroundColor: 'rgba(15,30,54,0.65)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
@@ -919,9 +946,11 @@ export default function AdminReturnApproval({
             justifyContent: 'center',
             padding: '20px',
             animation: 'fadeIn 0.2s ease',
+            overscrollBehavior: 'contain',
           }}
         >
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: '#FFFFFF',
               width: '100%',
@@ -1033,7 +1062,8 @@ export default function AdminReturnApproval({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
