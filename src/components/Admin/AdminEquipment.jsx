@@ -13,31 +13,136 @@ import { CATEGORY_IMAGES, getSportImage } from '../../data/mockData';
 
 export default function AdminEquipment({
   equipmentList = [],
+  borrowings = [],
+  transactions = [],
+  requests = [],
   onOpenAddModal,
   onOpenNotifications,
   onOpenSettings,
   unreadCount = 0,
 }) {
   const [filter, setFilter] = useState('All'); // 'All' | 'Available' | 'Borrowed' | 'Overdue'
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
+  // Helper to determine if an equipment has units currently being borrowed
+  const isItemBorrowed = (item) => {
+    const total = Number(item.total) || 0;
+    const available = Number(item.available);
+    if (item.status === 'Borrowed') return true;
+    if (available === 0 && total > 0) return true;
+    if (total > 0 && available < total) return true;
+
+    const code = (item.code || item.id || '').replace('#', '').trim().toUpperCase();
+    const name = (item.name || '').toLowerCase();
+
+    const hasActiveBorrowing = borrowings.some((b) => {
+      const bCode = (b.equipmentCode || b.equipmentId || '').replace('#', '').trim().toUpperCase();
+      const bName = (b.equipmentName || b.name || '').toLowerCase();
+      const match = (bCode && bCode === code) || (bName && bName.includes(name));
+      return match && (b.status === 'Borrowed' || b.status === 'Active' || b.status === 'Return Pending');
+    });
+
+    const hasActiveTx = transactions.some((tx) => {
+      const txCode = (tx.equipmentId || tx.equipmentCode || '').replace('#', '').trim().toUpperCase();
+      const txName = (tx.equipmentName || tx.equipment || '').toLowerCase();
+      const match = (txCode && txCode === code) || (txName && txName.includes(name));
+      return match && tx.status === 'Borrowed';
+    });
+
+    return hasActiveBorrowing || hasActiveTx;
+  };
+
+  // Helper to determine if an equipment is overdue
+  const isItemOverdue = (item) => {
+    if (item.status === 'Overdue') return true;
+
+    const code = (item.code || item.id || '').replace('#', '').trim().toUpperCase();
+    const name = (item.name || '').toLowerCase();
+
+    const hasOverdueBorrowing = borrowings.some((b) => {
+      const bCode = (b.equipmentCode || b.equipmentId || '').replace('#', '').trim().toUpperCase();
+      const bName = (b.equipmentName || b.name || '').toLowerCase();
+      const match = (bCode && bCode === code) || (bName && bName.includes(name));
+      return match && b.status === 'Overdue';
+    });
+
+    const hasOverdueTx = transactions.some((tx) => {
+      const txCode = (tx.equipmentId || tx.equipmentCode || '').replace('#', '').trim().toUpperCase();
+      const txName = (tx.equipmentName || tx.equipment || '').toLowerCase();
+      const match = (txCode && txCode === code) || (txName && txName.includes(name));
+      return match && tx.status === 'Overdue';
+    });
+
+    return hasOverdueBorrowing || hasOverdueTx;
+  };
+
+  // Helper to determine if an equipment has stock available to borrow
+  const isItemAvailable = (item) => {
+    if (isItemOverdue(item) && Number(item.available) === 0) return false;
+    if (item.status === 'Borrowed' && Number(item.available) === 0) return false;
+    const available = Number(item.available);
+    if (!isNaN(available) && available > 0) return true;
+    return item.status === 'Available';
+  };
+
+  // Helper to count how many units of an item are borrowed
+  const getBorrowedUnitCount = (item) => {
+    const total = Number(item.total) || 0;
+    const available = Number(item.available);
+    if (!isNaN(available) && total >= available) {
+      return total - available;
+    }
+    if (item.status === 'Borrowed') return total || 1;
+    return 0;
+  };
+
+  // Categories present in equipment list
+  const availableCategories = ['All', ...Array.from(new Set(equipmentList.map(item => item.category).filter(Boolean)))];
+
+  // Counts for modal tabs
+  const allCount = equipmentList.length;
+  const availableCount = equipmentList.filter(isItemAvailable).length;
+  const borrowedCount = equipmentList.filter(isItemBorrowed).length;
+  const overdueCount = equipmentList.filter(isItemOverdue).length;
+
   const filteredItems = equipmentList.filter((item) => {
-    const matchesFilter = filter === 'All' || item.status === filter;
+    // 1. Status Filter
+    let matchesStatus = true;
+    if (filter === 'Available') {
+      matchesStatus = isItemAvailable(item);
+    } else if (filter === 'Borrowed') {
+      matchesStatus = isItemBorrowed(item);
+    } else if (filter === 'Overdue') {
+      matchesStatus = isItemOverdue(item);
+    }
+
+    // 2. Category Filter
+    let matchesCategory = true;
+    if (categoryFilter !== 'All') {
+      matchesCategory = (item.category || '').toLowerCase() === categoryFilter.toLowerCase();
+    }
+
+    // 3. Search Query
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
       (item.name || '').toLowerCase().includes(q) ||
       (item.code || '').toLowerCase().includes(q) ||
       (item.id || '').toLowerCase().includes(q) ||
-      (item.category || '').toLowerCase().includes(q);
-    return matchesFilter && matchesSearch;
+      (item.category || '').toLowerCase().includes(q) ||
+      (item.location || '').toLowerCase().includes(q) ||
+      (item.condition || '').toLowerCase().includes(q);
+
+    return matchesStatus && matchesCategory && matchesSearch;
   });
 
-  const isFilterActive = filter !== 'All';
+  const isFilterActive = filter !== 'All' || categoryFilter !== 'All';
 
   const handleResetFilters = () => {
     setFilter('All');
+    setCategoryFilter('All');
     setSearchQuery('');
     setShowFilterModal(false);
   };
@@ -254,6 +359,18 @@ export default function AdminEquipment({
                 {filter}
               </span>
             )}
+            {categoryFilter !== 'All' && (
+              <span style={{
+                backgroundColor: '#FFFFFF',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                fontWeight: '700',
+                color: '#1D61E7',
+                border: '1px solid #CBD5E1'
+              }}>
+                {categoryFilter}
+              </span>
+            )}
             {searchQuery && (
               <span style={{
                 backgroundColor: '#FFFFFF',
@@ -433,27 +550,20 @@ export default function AdminEquipment({
                 </div>
                 <div>
                   <span style={{ color: '#94A3B8', display: 'block' }}>Available / Total</span>
-                  <span style={{ color: '#0F1E36', fontWeight: '800', display: 'block', marginTop: '2px' }}>
-                    {item.available} / {item.total}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginTop: '2px', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#0F1E36', fontWeight: '800' }}>
+                      {item.available} / {item.total}
+                    </span>
+                    {getBorrowedUnitCount(item) > 0 && (
+                      <span style={{ fontSize: '0.72rem', color: '#1D61E7', fontWeight: '600' }}>
+                        ({getBorrowedUnitCount(item)} out)
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <span style={{ color: '#94A3B8', display: 'block' }}>Status</span>
-                  {item.status === 'Available' && (
-                    <span style={{
-                      fontSize: '0.725rem',
-                      fontWeight: '700',
-                      color: '#15803D',
-                      backgroundColor: '#DCFCE7',
-                      padding: '2px 8px',
-                      borderRadius: '9999px',
-                      display: 'inline-block',
-                      marginTop: '2px'
-                    }}>
-                      Available
-                    </span>
-                  )}
-                  {item.status === 'Overdue' && (
+                  {isItemOverdue(item) ? (
                     <span style={{
                       fontSize: '0.725rem',
                       fontWeight: '700',
@@ -466,8 +576,7 @@ export default function AdminEquipment({
                     }}>
                       Overdue
                     </span>
-                  )}
-                  {item.status === 'Borrowed' && (
+                  ) : (item.status === 'Borrowed' || Number(item.available) === 0) ? (
                     <span style={{
                       fontSize: '0.725rem',
                       fontWeight: '700',
@@ -479,6 +588,32 @@ export default function AdminEquipment({
                       marginTop: '2px'
                     }}>
                       Borrowed
+                    </span>
+                  ) : filter === 'Borrowed' ? (
+                    <span style={{
+                      fontSize: '0.725rem',
+                      fontWeight: '700',
+                      color: '#1D61E7',
+                      backgroundColor: '#EEF4FF',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      display: 'inline-block',
+                      marginTop: '2px'
+                    }}>
+                      Borrowed ({getBorrowedUnitCount(item)})
+                    </span>
+                  ) : (
+                    <span style={{
+                      fontSize: '0.725rem',
+                      fontWeight: '700',
+                      color: '#15803D',
+                      backgroundColor: '#DCFCE7',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      display: 'inline-block',
+                      marginTop: '2px'
+                    }}>
+                      Available
                     </span>
                   )}
                 </div>
@@ -559,6 +694,11 @@ export default function AdminEquipment({
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 {['All', 'Available', 'Borrowed', 'Overdue'].map((opt) => {
                   const isSel = filter === opt;
+                  let count = allCount;
+                  if (opt === 'Available') count = availableCount;
+                  else if (opt === 'Borrowed') count = borrowedCount;
+                  else if (opt === 'Overdue') count = overdueCount;
+
                   return (
                     <button
                       key={opt}
@@ -573,15 +713,61 @@ export default function AdminEquipment({
                         fontWeight: isSel ? '800' : '600',
                         fontSize: '0.85rem',
                         cursor: 'pointer',
-                        textAlign: 'center'
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
                       }}
                     >
-                      {opt}
+                      <span>{opt}</span>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontWeight: '700',
+                        padding: '1px 6px',
+                        borderRadius: '9999px',
+                        backgroundColor: isSel ? '#1D61E7' : '#F1F5F9',
+                        color: isSel ? '#FFFFFF' : '#64748B'
+                      }}>
+                        {count}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             </div>
+
+            {/* Filter Section: Sport Category */}
+            {availableCategories.length > 1 && (
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#0F1E36', display: 'block', marginBottom: '8px' }}>
+                  Sport Category
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '140px', overflowY: 'auto' }}>
+                  {availableCategories.map((cat) => {
+                    const isSel = categoryFilter === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setCategoryFilter(cat)}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '9999px',
+                          border: isSel ? '1.5px solid #1D61E7' : '1px solid #E2E8F0',
+                          backgroundColor: isSel ? '#EEF4FF' : '#FFFFFF',
+                          color: isSel ? '#1D61E7' : '#475569',
+                          fontWeight: isSel ? '700' : '500',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Modal Actions */}
             <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>

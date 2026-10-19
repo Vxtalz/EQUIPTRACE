@@ -242,6 +242,16 @@ export const INITIAL_ADMIN_EQUIPMENT_LIST = [
     icon: '🎾',
   },
   {
+    id: 'PE-041',
+    name: 'Beach Volleyball',
+    code: '#PE-041',
+    category: 'Beach Volleyball',
+    location: 'Sand Court Storage',
+    condition: 'Good',
+    status: 'Borrowed',
+    icon: '🏐',
+  },
+  {
     id: 'PE-004',
     name: 'Football Match Ball',
     code: '#PE-004',

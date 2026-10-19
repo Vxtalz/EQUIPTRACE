@@ -86,7 +86,7 @@ export default function App() {
   const [adminKpis, setAdminKpis] = useState(INITIAL_ADMIN_KPIS);
   const [adminRequests, setAdminRequests] = useState(INITIAL_ADMIN_PENDING_REQUESTS);
   const [adminRecentTx, setAdminRecentTx] = useState(INITIAL_ADMIN_RECENT_TRANSACTIONS);
-  const [adminEquipment, setAdminEquipment] = useState([]);
+  const [adminEquipment, setAdminEquipment] = useState(INITIAL_EQUIPMENT_LIST);
   const [adminReturnApprovals, setAdminReturnApprovals] = useState(INITIAL_ADMIN_RETURN_APPROVALS);
   const [adminDismissedReadIds, setAdminDismissedReadIds] = useState(() => new Set());
 
@@ -1026,7 +1026,10 @@ export default function App() {
           )}
           {currentTab === 'equipment' && (
             <AdminEquipment
-              equipmentList={adminEquipment}
+              equipmentList={adminEquipment && adminEquipment.length > 0 ? adminEquipment : equipmentList}
+              borrowings={borrowings}
+              transactions={adminRecentTx}
+              requests={adminRequests}
               onOpenAddModal={() => setShowAddEquipmentModal(true)}
               onOpenNotifications={() => setShowNotifications(true)}
               onOpenSettings={() => setCurrentTab('more')}
