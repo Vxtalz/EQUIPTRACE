@@ -62,6 +62,7 @@ import {
 
 import {
   INITIAL_ADMIN_KPIS,
+  INITIAL_ADMIN_RECENT_TRANSACTIONS,
 } from './data/adminMockData';
 
 export default function App() {
@@ -82,7 +83,7 @@ export default function App() {
   // ── Admin state ──────────────────────────────────────────────────────────────
   const [adminKpis, setAdminKpis] = useState(INITIAL_ADMIN_KPIS);
   const [adminRequests, setAdminRequests] = useState([]);
-  const [adminRecentTx, setAdminRecentTx] = useState([]);
+  const [adminRecentTx, setAdminRecentTx] = useState(INITIAL_ADMIN_RECENT_TRANSACTIONS);
   const [adminEquipment, setAdminEquipment] = useState([]);
   const [adminReturnApprovals, setAdminReturnApprovals] = useState([]);
   const [adminDismissedReadIds, setAdminDismissedReadIds] = useState(() => new Set());
@@ -280,7 +281,9 @@ export default function App() {
       });
       unsubRefs.current.push(unsubReq);
 
-      const unsubTx = subscribeTransactions((rows) => setAdminRecentTx(rows));
+      const unsubTx = subscribeTransactions((rows) =>
+        setAdminRecentTx(rows && rows.length > 0 ? rows : INITIAL_ADMIN_RECENT_TRANSACTIONS)
+      );
       unsubRefs.current.push(unsubTx);
 
       const unsubReturns = subscribeReturnApprovals((rows) => setAdminReturnApprovals(rows));
@@ -576,8 +579,11 @@ export default function App() {
     await addTransaction({
       id:               `TX-${Date.now()}`,
       studentName:      req.studentName,
+      studentId:        req.studentId || '',
       studentInitials:  req.studentInitials || req.studentName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase(),
       equipment:        `${req.equipmentName} ${req.equipmentCode || ''}`,
+      equipmentName:    req.equipmentName || '',
+      equipmentId:      req.equipmentCode || req.equipmentId || '',
       date:             today,
       status:           'Borrowed',
     });
@@ -618,8 +624,11 @@ export default function App() {
     await addTransaction({
       id:               `TX-${Date.now()}`,
       studentName:      req.studentName,
+      studentId:        req.studentId || '',
       studentInitials:  req.studentInitials || req.studentName?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase(),
       equipment:        `${req.equipmentName} ${req.equipmentCode || ''}`,
+      equipmentName:    req.equipmentName || '',
+      equipmentId:      req.equipmentCode || req.equipmentId || '',
       date:             today,
       status:           'Rejected',
     });

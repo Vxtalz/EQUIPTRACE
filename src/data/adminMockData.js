@@ -30,30 +30,101 @@ export const INITIAL_ADMIN_PENDING_REQUESTS = [
   }
 ];
 
+// Dynamic date generator helper for realistic demo transactions
+const getRelativeDateStr = (daysAgo) => {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(d);
+};
+
 export const INITIAL_ADMIN_RECENT_TRANSACTIONS = [
   {
     id: 'TX-201',
-    studentName: 'Carlos Reyes',
-    studentInitials: 'CR',
-    equipment: 'Tennis Racket #PE-012',
-    date: 'Sep 24, 2026',
-    status: 'Overdue', // red badge
+    studentName: 'Maria Santos',
+    studentId: '2025-0089',
+    studentInitials: 'MS',
+    equipment: 'Badminton Racket Set #PE-022',
+    equipmentName: 'Badminton Racket Set',
+    equipmentId: 'PE-022',
+    date: getRelativeDateStr(0), // Today
+    status: 'Borrowed',
   },
   {
     id: 'TX-202',
-    studentName: 'Maria Santos',
-    studentInitials: 'MS',
-    equipment: 'Badminton Racket Set #PE-022',
-    date: 'Sep 26, 2026',
-    status: 'Borrowed', // light blue badge
+    studentName: 'Carlos Reyes',
+    studentId: '2025-0142',
+    studentInitials: 'CR',
+    equipment: 'Tennis Racket #PE-012',
+    equipmentName: 'Tennis Racket',
+    equipmentId: 'PE-012',
+    date: getRelativeDateStr(2), // Last 7 Days
+    status: 'Overdue',
   },
   {
     id: 'TX-203',
     studentName: 'Juan Dela Cruz',
+    studentId: '2025-0012',
     studentInitials: 'JD',
     equipment: 'Volleyball #PE-007',
-    date: 'Sep 17, 2026',
-    status: 'Returned', // green badge
+    equipmentName: 'Volleyball',
+    equipmentId: 'PE-007',
+    date: getRelativeDateStr(4), // Last 7 Days
+    status: 'Returned',
+  },
+  {
+    id: 'TX-204',
+    studentName: 'Alyssa Valdez',
+    studentId: '2025-0055',
+    studentInitials: 'AV',
+    equipment: 'Beach Volleyball #PE-041',
+    equipmentName: 'Beach Volleyball',
+    equipmentId: 'PE-041',
+    date: getRelativeDateStr(6), // Last 7 Days
+    status: 'Borrowed',
+  },
+  {
+    id: 'TX-205',
+    studentName: 'Miguel Tan',
+    studentId: '2025-0118',
+    studentInitials: 'MT',
+    equipment: 'Basketball #PE-023',
+    equipmentName: 'Basketball',
+    equipmentId: 'PE-023',
+    date: getRelativeDateStr(12), // Last 30 Days
+    status: 'Returned',
+  },
+  {
+    id: 'TX-206',
+    studentName: 'Sofia Andres',
+    studentId: '2025-0094',
+    studentInitials: 'SA',
+    equipment: 'Table Tennis Paddle Set #PE-031',
+    equipmentName: 'Table Tennis Paddle Set',
+    equipmentId: 'PE-031',
+    date: getRelativeDateStr(18), // Last 30 Days
+    status: 'Borrowed',
+  },
+  {
+    id: 'TX-207',
+    studentName: 'Paolo Gomez',
+    studentId: '2025-0073',
+    studentInitials: 'PG',
+    equipment: 'Futsal Ball #PE-018',
+    equipmentName: 'Futsal Ball',
+    equipmentId: 'PE-018',
+    date: getRelativeDateStr(26), // Last 30 Days
+    status: 'Returned',
+  },
+  {
+    id: 'TX-208',
+    studentName: 'Beatrice Lim',
+    studentId: '2025-0160',
+    studentInitials: 'BL',
+    equipment: 'Football #PE-015',
+    equipmentName: 'Football',
+    equipmentId: 'PE-015',
+    date: getRelativeDateStr(45), // All Time
+    status: 'Overdue',
   },
 ];
 
