@@ -253,50 +253,50 @@ export default function AdminReturnApproval({
     >
       {/* Top Header */}
       <div style={{ paddingTop: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
             <img
               src={equiptraceLogo}
               alt="EquipTrace"
               style={{
-                height: '38px',
+                height: '36px',
                 objectFit: 'contain',
                 display: 'block',
                 flexShrink: 0,
               }}
             />
-            <div style={{ borderLeft: '2px solid #CBD5E1', paddingLeft: '12px', minWidth: 0 }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0F1E36', letterSpacing: '-0.3px', margin: 0, lineHeight: '1.2' }}>
-                Return Approval
-              </h2>
-              <p style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '500', margin: '2px 0 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ borderLeft: '2px solid #CBD5E1', paddingLeft: '10px', minWidth: 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0F1E36', letterSpacing: '-0.3px', margin: 0, lineHeight: '1.2' }}>
+                  Return Approval
+                </h2>
+                {pendingCount > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: '#EF4444',
+                      color: '#FFFFFF',
+                      fontSize: '0.7rem',
+                      fontWeight: '800',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      boxShadow: '0 2px 6px rgba(239,68,68,0.25)',
+                      whiteSpace: 'nowrap',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    {pendingCount} Pending
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '500', margin: '2px 0 0 0', lineHeight: '1.3' }}>
                 Verify physical condition and finalize returns
               </p>
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            {pendingCount > 0 && (
-              <span
-                style={{
-                  backgroundColor: '#EF4444',
-                  color: '#FFFFFF',
-                  fontSize: '0.75rem',
-                  fontWeight: '800',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  boxShadow: '0 2px 6px rgba(239,68,68,0.3)',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  lineHeight: '1',
-                }}
-              >
-                {pendingCount} Pending
-              </span>
-            )}
-
             <button
               type="button"
               onClick={onOpenNotifications}

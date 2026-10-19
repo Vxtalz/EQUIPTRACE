@@ -25,43 +25,55 @@ export default function AdminEquipment({
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
+  // Helper to count active borrowings for this equipment
+  const getActiveBorrowCount = (item) => {
+    const itemCode = (item.code || item.id || '').replace('#', '').trim().toUpperCase();
+    const itemName = (item.name || '').toLowerCase().trim();
+    const itemDocId = item.firestoreId;
+
+    return borrowings.filter((b) => {
+      const bCode = (b.equipmentCode || b.equipmentId || b.id || '').replace('#', '').trim().toUpperCase();
+      const bName = (b.equipmentName || b.name || '').toLowerCase().trim();
+      const bDocId = b.equipmentDocId || b.firestoreId;
+
+      const isMatch =
+        (itemDocId && bDocId && itemDocId === bDocId) ||
+        (itemCode && bCode && itemCode === bCode) ||
+        (itemName && bName && itemName === bName);
+
+      const isActive =
+        b.status === 'Borrowed' ||
+        b.status === 'Active' ||
+        b.status === 'Return Pending' ||
+        b.status === 'Pending Approval';
+
+      return isMatch && isActive;
+    }).length;
+  };
+
   // Helper to determine if an equipment is currently borrowed by a student
   const isItemBorrowed = (item) => {
-    const code = (item.code || item.id || '').replace('#', '').trim().toUpperCase();
-    const name = (item.name || '').toLowerCase();
-
-    // 1. Check if there is an active borrowing record in borrowings matching this equipment
-    const hasActiveBorrowing = borrowings.some((b) => {
-      const bCode = (b.equipmentCode || b.equipmentId || b.id || '').replace('#', '').trim().toUpperCase();
-      const bName = (b.equipmentName || b.name || '').toLowerCase();
-      const match = (bCode && (bCode === code || code.includes(bCode) || bCode.includes(code))) ||
-                    (bName && (bName.includes(name) || name.includes(bName)));
-      return match && (b.status === 'Borrowed' || b.status === 'Active' || b.status === 'Return Pending' || b.status === 'Pending Approval');
-    });
-
-    if (hasActiveBorrowing) return true;
-    if (item.status === 'Borrowed') return true;
-
-    return false;
+    return getActiveBorrowCount(item) > 0;
   };
 
   // Helper to determine if an equipment has overdue borrowings
   const isItemOverdue = (item) => {
-    const code = (item.code || item.id || '').replace('#', '').trim().toUpperCase();
-    const name = (item.name || '').toLowerCase();
+    const itemCode = (item.code || item.id || '').replace('#', '').trim().toUpperCase();
+    const itemName = (item.name || '').toLowerCase().trim();
+    const itemDocId = item.firestoreId;
 
-    const hasOverdueBorrowing = borrowings.some((b) => {
+    return borrowings.some((b) => {
       const bCode = (b.equipmentCode || b.equipmentId || b.id || '').replace('#', '').trim().toUpperCase();
-      const bName = (b.equipmentName || b.name || '').toLowerCase();
-      const match = (bCode && (bCode === code || code.includes(bCode) || bCode.includes(code))) ||
-                    (bName && (bName.includes(name) || name.includes(bName)));
-      return match && b.status === 'Overdue';
+      const bName = (b.equipmentName || b.name || '').toLowerCase().trim();
+      const bDocId = b.equipmentDocId || b.firestoreId;
+
+      const isMatch =
+        (itemDocId && bDocId && itemDocId === bDocId) ||
+        (itemCode && bCode && itemCode === bCode) ||
+        (itemName && bName && itemName === bName);
+
+      return isMatch && b.status === 'Overdue';
     });
-
-    if (hasOverdueBorrowing) return true;
-    if (item.status === 'Overdue') return true;
-
-    return false;
   };
 
   // Helper to determine if an equipment is available
@@ -496,7 +508,7 @@ export default function AdminEquipment({
                 <div>
                   <span style={{ color: '#94A3B8', display: 'block' }}>Available / Total</span>
                   <span style={{ color: '#0F1E36', fontWeight: '800', display: 'block', marginTop: '2px' }}>
-                    {item.available} / {item.total}
+                    {Math.max(0, (Number(item.total) || 4) - getActiveBorrowCount(item))} / {Number(item.total) || 4}
                   </span>
                 </div>
                 <div>

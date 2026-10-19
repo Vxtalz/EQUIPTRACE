@@ -61,11 +61,11 @@ export default function EquipmentDetailModal({
           formattedReturnBy,
         });
       }
-      // Transition directly to the "Request sent" screen (Image 3)
-      setSubmitted(true);
     } catch (err) {
       console.error('Borrow error:', err);
     } finally {
+      // Transition directly to the "Request sent" screen (Image 3)
+      setSubmitted(true);
       setSubmitting(false);
     }
   };
@@ -536,6 +536,8 @@ export default function EquipmentDetailModal({
             boxShadow: agreed ? '0 4px 14px rgba(29, 97, 231, 0.3)' : 'none',
             fontFamily: 'inherit',
             transition: 'all 0.15s ease',
+            touchAction: 'manipulation',
+            WebkitTapHighlightColor: 'transparent',
           }}
         >
           <Check size={20} />

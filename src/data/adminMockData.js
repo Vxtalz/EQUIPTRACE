@@ -49,7 +49,7 @@ export const INITIAL_ADMIN_PENDING_REQUESTS = [
     icon: '🏐',
     requestedDate: getRelativeDateStr(2),
     returnBy: getRelativeDateStr(-2) + ' · 4:00 PM',
-    status: 'Borrowed',
+    status: 'Returned',
     purpose: 'Varsity Training Session',
   },
   {
@@ -162,7 +162,7 @@ export const INITIAL_ADMIN_RECENT_TRANSACTIONS = [
     equipmentName: 'Beach Volleyball',
     equipmentId: 'PE-041',
     date: getRelativeDateStr(6), // Last 7 Days
-    status: 'Borrowed',
+    status: 'Returned',
   },
   {
     id: 'TX-205',
@@ -333,35 +333,4 @@ export const INITIAL_ADMIN_EQUIPMENT_LIST = [
   },
 ];
 
-export const INITIAL_ADMIN_RETURN_APPROVALS = [
-  {
-    id: 'RET-301',
-    borrowId: 'BORROW-1001',
-    equipmentId: 'PE-007',
-    equipmentName: 'Volleyball',
-    category: 'Volleyball',
-    studentId: '2025-0012',
-    studentName: 'Juan Dela Cruz',
-    borrowedTime: 'Yesterday · 2:00 PM',
-    returnSubmittedTime: '10:30 AM',
-    returnSubmittedDate: getRelativeDateStr(0),
-    status: 'Return Pending',
-    condition: 'Good Condition',
-    notes: 'Handed in at sports equipment room',
-  },
-  {
-    id: 'RET-302',
-    borrowId: 'BORROW-1002',
-    equipmentId: 'PE-031',
-    equipmentName: 'Table Tennis Paddle Set',
-    category: 'Table Tennis',
-    studentId: '2025-0094',
-    studentName: 'Sofia Andres',
-    borrowedTime: getRelativeDateStr(3),
-    returnSubmittedTime: 'Yesterday · 4:15 PM',
-    returnSubmittedDate: getRelativeDateStr(1),
-    status: 'Return Pending',
-    condition: 'Good Condition',
-    notes: 'Clean and fully checked',
-  },
-];
+export const INITIAL_ADMIN_RETURN_APPROVALS = [];

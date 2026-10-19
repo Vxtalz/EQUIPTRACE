@@ -365,13 +365,15 @@ export default function App() {
   const handleScanEquipment = (equipment) => setScannedEquipment(equipment);
 
   const handleConfirmBorrow = async (equipment, borrowDetails = {}) => {
-    if (!authUser) return;
-
     const borrowId = `BORROW-${Math.floor(1000 + Math.random() * 9000)}`;
     const returnDate = borrowDetails.returnDate || new Date().toISOString().split('T')[0];
     const returnTime = borrowDetails.returnTime || '17:00';
     const purpose = borrowDetails.purpose || 'PE Class Activity';
     const formattedReturnBy = borrowDetails.formattedReturnBy || 'Today, 5:00 PM';
+
+    const currentUid = authUser?.uid || student?.id || 'student-uid';
+    const currentStudentNumber = student?.id || (authUser?.email ? authUser.email.split('@')[0] : '2025-001');
+    const currentStudentName = student?.name || 'Student';
 
     // 1. Create Borrowing record with status 'Pending Approval'
     const borrowRecord = {
@@ -387,27 +389,28 @@ export default function App() {
       expectedReturnTime: returnTime,
       returnBy:           formattedReturnBy,
       purpose:            purpose,
-      studentId:          authUser.uid,
-      studentNumber:      student.id || '2025-001',
-      studentName:        student.name || 'Student',
-      studentCourse:      student.course || '',
-      studentYearLevel:   student.yearLevel || '',
+      studentId:          currentUid,
+      studentNumber:      currentStudentNumber,
+      studentName:        currentStudentName,
+      studentCourse:      student?.course || '',
+      studentYearLevel:   student?.yearLevel || '',
       status:             'Pending Approval',
     };
 
-    const borrowingDocId = await addBorrowing(borrowRecord);
+    // Optimistically update local borrowings immediately
+    setBorrowings((prev) => [borrowRecord, ...prev.filter((b) => b.borrowId !== borrowId)]);
 
     // 2. Submit formal Request into the Admin 'requests' collection
     const reqRecord = {
       id:                 `REQ-${Date.now()}`,
-      borrowingDocId:     borrowingDocId || '',
+      borrowingDocId:     '',
       borrowId:           borrowId,
-      studentId:          student.id || authUser.email?.split('@')[0] || '2025-001',
-      studentUid:         authUser.uid,
-      studentName:        student.name || 'Student',
-      studentCourse:      student.course || '',
-      studentYearLevel:   student.yearLevel || '',
-      studentInitials:    (student.name || 'Student')
+      studentId:          currentStudentNumber,
+      studentUid:         currentUid,
+      studentName:        currentStudentName,
+      studentCourse:      student?.course || '',
+      studentYearLevel:   student?.yearLevel || '',
+      studentInitials:    currentStudentName
         .split(' ')
         .map((n) => n[0])
         .join('')
@@ -426,29 +429,41 @@ export default function App() {
       status:             'Pending',
     };
 
-    await addRequest(reqRecord);
+    // Optimistically update local adminRequests immediately
+    setAdminRequests((prev) => [reqRecord, ...prev.filter((r) => r.borrowId !== borrowId)]);
 
     // 3. Student Notification
     const notifPayload = {
-      studentId: authUser.uid,
+      studentId: currentUid,
       title:     'Borrow Request Submitted',
       message:   `Your request for ${equipment.name} (${equipment.id}) was sent. Due by ${formattedReturnBy}.`,
       time:      'Just now',
     };
-    await addNotification(notifPayload);
-
-    // 4. Admin Push Notification in database
-    await addNotification({
-      studentId: 'admin',
-      title:     'New Borrow Request',
-      message:   `${student.name || 'Student'} requested ${equipment.name} (${equipment.id}). Due ${formattedReturnBy}.`,
-      time:      'Just now',
-      category:  'request',
-    });
-
-    // Trigger Phone Status Bar Push Banner
+    setNotifications((prev) => [notifPayload, ...prev]);
     triggerPushBanner(notifPayload);
     try { confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } }); } catch (e) {}
+
+    // 4. Background persist to Firestore (does not block UI or throw)
+    try {
+      const borrowingDocId = await addBorrowing(borrowRecord);
+      if (borrowingDocId) {
+        reqRecord.borrowingDocId = borrowingDocId;
+        setBorrowings((prev) =>
+          prev.map((b) => (b.borrowId === borrowId ? { ...b, firestoreId: borrowingDocId } : b))
+        );
+      }
+      await addRequest(reqRecord);
+      await addNotification(notifPayload);
+      await addNotification({
+        studentId: 'admin',
+        title:     'New Borrow Request',
+        message:   `${currentStudentName} requested ${equipment.name} (${equipment.id}). Due ${formattedReturnBy}.`,
+        time:      'Just now',
+        category:  'request',
+      });
+    } catch (err) {
+      console.warn('[Firestore] Background borrow sync warning (offline fallback applied):', err);
+    }
   };
 
   // ── Student: Submit Return (enters 'Return Pending') ────────────────────────
