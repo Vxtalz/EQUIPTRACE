@@ -32,8 +32,7 @@ export default function AdminAnalytics({
   const overdueRate = borrowed > 0 ? Math.round((overdue / borrowed) * 100) : 0;
 
   // Real-time total transaction activity count strictly based on actual activity
-  const realActivityCount = (transactions || []).length + (borrowings || []).length + (history || []).length;
-  const txCount = realActivityCount;
+  const txCount = (borrowings || []).length + (history || []).length;
 
   // Dynamic ranking of top borrowed equipment strictly based on actual borrowings
   const mostBorrowedData = useMemo(() => {
@@ -66,31 +65,22 @@ export default function AdminAnalytics({
       if (n.includes('futsal')) return 'Futsal';
       if (n.includes('billiard') || n.includes('pool')) return 'Billiards';
       if (n.includes('sepak') || n.includes('takraw')) return 'Sepak Takraw';
-      return name || 'Sports Equipment';
+      return null;
     };
 
-    // Strictly count items from active borrowings
+    // Strictly count items from real active borrowings
     (borrowings || []).forEach((b) => {
       const cat = getEquipmentCategory(b);
-      counts[cat] = (counts[cat] || 0) + 1;
+      if (cat) {
+        counts[cat] = (counts[cat] || 0) + 1;
+      }
     });
 
-    // Strictly count items from returned history
+    // Strictly count items from real returned history
     (history || []).forEach((h) => {
       const cat = getEquipmentCategory(h);
-      counts[cat] = (counts[cat] || 0) + 1;
-    });
-
-    // Count from transactions if any unique records
-    (transactions || []).forEach((t) => {
-      if (t.status === 'Borrowed' || t.status === 'Returned') {
-        const cat = getEquipmentCategory(t);
-        const alreadyInBorrow = (borrowings || []).some(
-          (b) => b.borrowId === t.id || b.id === t.equipmentId
-        );
-        if (!alreadyInBorrow) {
-          counts[cat] = (counts[cat] || 0) + 1;
-        }
+      if (cat) {
+        counts[cat] = (counts[cat] || 0) + 1;
       }
     });
 
@@ -102,7 +92,7 @@ export default function AdminAnalytics({
     const sorted = entries
       .map(([name, count]) => ({
         name,
-        icon: icons[name] || '🏆',
+        icon: icons[name] || '🏀',
         count,
       }))
       .sort((a, b) => b.count - a.count)
@@ -115,7 +105,7 @@ export default function AdminAnalytics({
       rank: index + 1,
       percentage: Math.min(95, Math.max(20, Math.round((item.count / maxCount) * 85))),
     }));
-  }, [borrowings, history, transactions]);
+  }, [borrowings, history]);
 
   return (
     <div className="admin-analytics animate-fade-in" style={{
