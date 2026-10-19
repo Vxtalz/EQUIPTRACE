@@ -238,7 +238,7 @@ export const INITIAL_ADMIN_EQUIPMENT_LIST = [
     category: 'Tennis',
     location: 'Sports Office',
     condition: 'Fair',
-    status: 'Overdue',
+    status: 'Available',
     icon: '🎾',
   },
   {
@@ -248,7 +248,7 @@ export const INITIAL_ADMIN_EQUIPMENT_LIST = [
     category: 'Beach Volleyball',
     location: 'Sand Court Storage',
     condition: 'Good',
-    status: 'Borrowed',
+    status: 'Available',
     icon: '🏐',
   },
   {
