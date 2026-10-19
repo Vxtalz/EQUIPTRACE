@@ -1099,6 +1099,7 @@ export default function App() {
               equipmentList={adminEquipment && adminEquipment.length > 0 ? adminEquipment : equipmentList}
               transactions={adminRecentTx}
               borrowings={borrowings}
+              history={history}
               requests={adminRequests}
               onOpenNotifications={() => setShowNotifications(true)}
               onOpenSettings={() => setCurrentTab('more')}

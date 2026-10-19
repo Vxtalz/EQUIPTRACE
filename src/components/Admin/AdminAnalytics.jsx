@@ -8,6 +8,7 @@ export default function AdminAnalytics({
   equipmentList = [],
   transactions = [],
   borrowings = [],
+  history = [],
   requests = [],
   onOpenNotifications,
   onOpenSettings,
@@ -16,7 +17,7 @@ export default function AdminAnalytics({
   const total = kpis.totalEquipment || equipmentList.reduce((s, e) => s + (Number(e.total) || 4), 0) || 50;
 
   // Real-time active borrowings count
-  const activeBorrows = borrowings.filter(
+  const activeBorrows = (borrowings || []).filter(
     (b) =>
       b.status === 'Borrowed' ||
       b.status === 'Active' ||
@@ -25,25 +26,18 @@ export default function AdminAnalytics({
   ).length;
 
   const borrowed = kpis.borrowed !== undefined ? kpis.borrowed : activeBorrows;
-  const overdue = kpis.overdue !== undefined ? kpis.overdue : borrowings.filter((b) => b.status === 'Overdue').length;
+  const overdue = kpis.overdue !== undefined ? kpis.overdue : (borrowings || []).filter((b) => b.status === 'Overdue').length;
 
   const utilization = total > 0 ? Math.round((borrowed / total) * 100) : 0;
   const overdueRate = borrowed > 0 ? Math.round((overdue / borrowed) * 100) : 0;
 
-  // Real-time total transaction activity count
-  const txCount = 100 + (transactions.length || 0) + (borrowings.length || 0);
+  // Real-time total transaction activity count strictly based on actual activity
+  const realActivityCount = (transactions || []).length + (borrowings || []).length + (history || []).length;
+  const txCount = realActivityCount;
 
-  // Dynamic ranking of top borrowed equipment in real time
+  // Dynamic ranking of top borrowed equipment strictly based on actual borrowings
   const mostBorrowedData = useMemo(() => {
-    const counts = {
-      Basketball: 18,
-      Volleyball: 12,
-      'Table Tennis': 9,
-      'Tennis Racket': 7,
-      Football: 6,
-      Badminton: 5,
-      Futsal: 4,
-    };
+    const counts = {};
 
     const icons = {
       Basketball: '🏀',
@@ -59,32 +53,53 @@ export default function AdminAnalytics({
       'Sepak Takraw': '🏐',
     };
 
-    // Increment dynamically based on real-time borrowings
-    borrowings.forEach((b) => {
-      const name = b.equipmentName || b.name || b.category || '';
-      for (const key of Object.keys(counts)) {
-        if (name.toLowerCase().includes(key.toLowerCase())) {
-          counts[key] = (counts[key] || 0) + 1;
-          return;
-        }
-      }
-      const cat = b.category || 'Other';
+    const getEquipmentCategory = (item) => {
+      const name = (item.equipmentName || item.name || item.category || '').trim();
+      const n = name.toLowerCase();
+      if (n.includes('beach volleyball')) return 'Beach Volleyball';
+      if (n.includes('volleyball')) return 'Volleyball';
+      if (n.includes('basketball')) return 'Basketball';
+      if (n.includes('table tennis') || n.includes('paddle') || n.includes('ping pong')) return 'Table Tennis';
+      if (n.includes('tennis')) return 'Tennis Racket';
+      if (n.includes('badminton')) return 'Badminton';
+      if (n.includes('football') || n.includes('soccer')) return 'Football';
+      if (n.includes('futsal')) return 'Futsal';
+      if (n.includes('billiard') || n.includes('pool')) return 'Billiards';
+      if (n.includes('sepak') || n.includes('takraw')) return 'Sepak Takraw';
+      return name || 'Sports Equipment';
+    };
+
+    // Strictly count items from active borrowings
+    (borrowings || []).forEach((b) => {
+      const cat = getEquipmentCategory(b);
       counts[cat] = (counts[cat] || 0) + 1;
     });
 
-    // Increment dynamically based on real-time transactions
-    transactions.forEach((t) => {
-      const name = t.equipmentName || t.equipment || '';
-      for (const key of Object.keys(counts)) {
-        if (name.toLowerCase().includes(key.toLowerCase())) {
-          counts[key] = (counts[key] || 0) + 1;
-          return;
+    // Strictly count items from returned history
+    (history || []).forEach((h) => {
+      const cat = getEquipmentCategory(h);
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+
+    // Count from transactions if any unique records
+    (transactions || []).forEach((t) => {
+      if (t.status === 'Borrowed' || t.status === 'Returned') {
+        const cat = getEquipmentCategory(t);
+        const alreadyInBorrow = (borrowings || []).some(
+          (b) => b.borrowId === t.id || b.id === t.equipmentId
+        );
+        if (!alreadyInBorrow) {
+          counts[cat] = (counts[cat] || 0) + 1;
         }
       }
     });
 
-    // Sort descending and select top 4
-    const sorted = Object.entries(counts)
+    const entries = Object.entries(counts).filter(([_, count]) => count > 0);
+    if (entries.length === 0) {
+      return [];
+    }
+
+    const sorted = entries
       .map(([name, count]) => ({
         name,
         icon: icons[name] || '🏆',
@@ -93,14 +108,14 @@ export default function AdminAnalytics({
       .sort((a, b) => b.count - a.count)
       .slice(0, 4);
 
-    const maxCount = sorted.length > 0 ? Math.max(...sorted.map((item) => item.count)) : 1;
+    const maxCount = Math.max(...sorted.map((item) => item.count), 1);
 
     return sorted.map((item, index) => ({
       ...item,
       rank: index + 1,
-      percentage: Math.min(95, Math.max(15, Math.round((item.count / maxCount) * 85))),
+      percentage: Math.min(95, Math.max(20, Math.round((item.count / maxCount) * 85))),
     }));
-  }, [borrowings, transactions]);
+  }, [borrowings, history, transactions]);
 
   return (
     <div className="admin-analytics animate-fade-in" style={{
@@ -111,7 +126,7 @@ export default function AdminAnalytics({
       minHeight: '100%',
       gap: '16px'
     }}>
-      {/* Top Header Bar matching Screenshot 1 */}
+      {/* Top Header Bar */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -193,7 +208,7 @@ export default function AdminAnalytics({
         </div>
       </div>
 
-      {/* Top Row Metric Cards matching Screenshot 1 */}
+      {/* Top Row Metric Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
@@ -264,7 +279,7 @@ export default function AdminAnalytics({
         </div>
       </div>
 
-      {/* Second Row Card: Transactions matching Screenshot 1 */}
+      {/* Second Row Card: Transactions */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
@@ -302,10 +317,15 @@ export default function AdminAnalytics({
         </div>
       </div>
 
-      {/* Interactive Borrowing Trend Chart */}
-      <BorrowingTrendChart title="Borrowing trend" transactions={transactions} borrowings={borrowings} />
+      {/* Interactive Borrowing Trend Chart with Live Daily Stats */}
+      <BorrowingTrendChart
+        title="Borrowing trend"
+        transactions={transactions}
+        borrowings={borrowings}
+        history={history}
+      />
 
-      {/* Most borrowed equipment Section matching Screenshot 1 */}
+      {/* Most borrowed equipment Section */}
       <div style={{
         backgroundColor: '#FFFFFF',
         borderRadius: '18px',
@@ -320,33 +340,47 @@ export default function AdminAnalytics({
           Most borrowed equipment
         </h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {mostBorrowedData.map((item) => (
-            <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#94A3B8', width: '12px' }}>
-                {item.rank}
-              </span>
-              <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-              <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0F1E36', width: '100px' }}>
-                {item.name}
-              </span>
-              <div style={{ flex: 1, height: '8px', borderRadius: '9999px', backgroundColor: '#F1F5F9', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${item.percentage}%`,
-                    height: '100%',
-                    backgroundColor: '#1D61E7',
-                    borderRadius: '9999px',
-                    transition: 'width 0.4s ease',
-                  }}
-                />
+        {mostBorrowedData.length === 0 ? (
+          <div style={{
+            padding: '24px 16px',
+            textAlign: 'center',
+            color: '#64748B',
+            fontSize: '0.875rem',
+            backgroundColor: '#F8FAFC',
+            borderRadius: '12px',
+            border: '1px dashed #CBD5E1',
+          }}>
+            No equipment borrowed yet. Borrowed items will appear here.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {mostBorrowedData.map((item) => (
+              <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#94A3B8', width: '12px' }}>
+                  {item.rank}
+                </span>
+                <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
+                <span style={{ fontSize: '0.9rem', fontWeight: '800', color: '#0F1E36', width: '100px' }}>
+                  {item.name}
+                </span>
+                <div style={{ flex: 1, height: '8px', borderRadius: '9999px', backgroundColor: '#F1F5F9', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      width: `${item.percentage}%`,
+                      height: '100%',
+                      backgroundColor: '#1D61E7',
+                      borderRadius: '9999px',
+                      transition: 'width 0.4s ease',
+                    }}
+                  />
+                </div>
+                <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#64748B', width: '20px', textAlign: 'right' }}>
+                  {item.count}
+                </span>
               </div>
-              <span style={{ fontSize: '0.85rem', fontWeight: '700', color: '#64748B', width: '20px', textAlign: 'right' }}>
-                {item.count}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Clearance spacer for floating bottom navigation bar */}

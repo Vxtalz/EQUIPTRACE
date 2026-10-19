@@ -3,45 +3,70 @@ import React, { useState, useMemo } from 'react';
 export default function BorrowingTrendChart({
   title = 'Borrowing trend',
   transactions = [],
-  borrowings = []
+  borrowings = [],
+  history = [],
 }) {
   const [timeRange, setTimeRange] = useState('30D'); // '7D' | '30D'
   const [activePointIndex, setActivePointIndex] = useState(null);
 
-  // Generate dataset based on time range and real transactions/borrowings
+  // Generate dataset for every single day leading up to Today (e.g. Oct 19, 2026)
   const data = useMemo(() => {
-    const activeBorrows = (borrowings || []).filter(
-      b => b.status === 'Borrowed' || b.status === 'Active' || b.status === 'Return Pending' || b.status === 'Pending Approval'
-    ).length;
+    const numDays = timeRange === '7D' ? 7 : 30;
+    const result = [];
+    const now = new Date();
 
-    if (timeRange === '7D') {
-      return [
-        { label: 'Oct 6', fullDate: 'Oct 6, 2026', value: 19 },
-        { label: 'Oct 7', fullDate: 'Oct 7, 2026', value: 24 },
-        { label: 'Oct 8', fullDate: 'Oct 8, 2026', value: 22 },
-        { label: 'Oct 9', fullDate: 'Oct 9, 2026', value: 28 },
-        { label: 'Oct 10', fullDate: 'Oct 10, 2026', value: 25 },
-        { label: 'Oct 11', fullDate: 'Oct 11, 2026', value: 31 },
-        { label: 'Oct 12', fullDate: 'Today (Oct 12)', value: 28 + activeBorrows },
-      ];
+    const allRecords = [
+      ...(borrowings || []),
+      ...(transactions || []),
+      ...(history || []),
+    ];
+
+    for (let i = numDays - 1; i >= 0; i--) {
+      const targetDate = new Date(now);
+      targetDate.setDate(now.getDate() - i);
+
+      const monthName = targetDate.toLocaleDateString('en-US', { month: 'short' });
+      const dayNum = targetDate.getDate();
+      const year = targetDate.getFullYear();
+      const monthNum = targetDate.getMonth() + 1;
+
+      const dateLabel = `${monthName} ${dayNum}`; // e.g. "Oct 19"
+      const fullDate = i === 0 ? `Today (${monthName} ${dayNum})` : `${monthName} ${dayNum}, ${year}`;
+
+      const slashPattern = `${monthNum}/${dayNum}/${year}`;
+      const isoPattern = `${year}-${String(monthNum).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+      const shortSlash = `${monthNum}/${dayNum}`;
+
+      // Count borrows that occurred on this specific day
+      let dayCount = 0;
+      allRecords.forEach((item) => {
+        const itemDateStr = (item.borrowedDate || item.date || item.requestedDate || '').toString();
+        const matchesDate =
+          itemDateStr.includes(dateLabel) ||
+          itemDateStr.includes(slashPattern) ||
+          itemDateStr.includes(isoPattern) ||
+          (itemDateStr.includes(shortSlash) && !itemDateStr.includes(`${monthNum}/${dayNum}0`));
+
+        if (matchesDate) {
+          dayCount++;
+        }
+      });
+
+      // If it's today and active borrowings exist
+      if (i === 0 && dayCount === 0 && (borrowings || []).length > 0) {
+        dayCount = (borrowings || []).length;
+      }
+
+      result.push({
+        label: dateLabel,
+        fullDate,
+        value: dayCount,
+        isToday: i === 0,
+      });
     }
 
-    // 30 Days dataset closely matching the trend
-    return [
-      { label: 'Sep 1', fullDate: 'Sep 1, 2026', value: 20 },
-      { label: 'Sep 4', fullDate: 'Sep 4, 2026', value: 23 },
-      { label: 'Sep 8', fullDate: 'Sep 8, 2026', value: 21 },
-      { label: 'Sep 11', fullDate: 'Sep 11, 2026', value: 27 },
-      { label: 'Sep 14', fullDate: 'Sep 14, 2026', value: 24 },
-      { label: 'Sep 18', fullDate: 'Sep 18, 2026', value: 29 },
-      { label: 'Sep 21', fullDate: 'Sep 21, 2026', value: 27 },
-      { label: 'Sep 24', fullDate: 'Sep 24, 2026', value: 32 },
-      { label: 'Sep 27', fullDate: 'Sep 27, 2026', value: 30 },
-      { label: 'Sep 29', fullDate: 'Sep 29, 2026', value: 34 },
-      { label: 'Sep 30', fullDate: 'Sep 30, 2026', value: 32 },
-      { label: 'Oct 12', fullDate: 'Today (Oct 12)', value: 31 + activeBorrows },
-    ];
-  }, [timeRange, borrowings]);
+    return result;
+  }, [timeRange, borrowings, transactions, history]);
 
   // Chart Dimensions
   const svgWidth = 320;
@@ -55,24 +80,23 @@ export default function BorrowingTrendChart({
   const chartH = svgHeight - padTop - padBottom;
 
   const { minY, maxY, tick1, tick2, tick3 } = useMemo(() => {
-    const vals = data.map(d => d.value);
-    const maxVal = Math.max(...vals);
-    const minVal = Math.min(...vals);
-    const low = Math.max(0, Math.floor(minVal * 0.7));
-    const high = Math.max(45, Math.ceil(maxVal * 1.15));
+    const vals = data.map((d) => d.value);
+    const maxVal = Math.max(...vals, 0);
+    const low = 0;
+    const high = Math.max(5, Math.ceil(maxVal * 1.25));
     return {
       minY: low,
       maxY: high,
-      tick1: Math.round(low + (high - low) * 0.3),
-      tick2: Math.round(low + (high - low) * 0.6),
-      tick3: Math.round(low + (high - low) * 0.9),
+      tick1: Math.round(high * 0.33),
+      tick2: Math.round(high * 0.66),
+      tick3: high,
     };
   }, [data]);
 
   const points = useMemo(() => {
     return data.map((d, index) => {
       const x = padLeft + (index / (data.length - 1)) * chartW;
-      const normalizedY = Math.min(1, Math.max(0, (d.value - minY) / (maxY - minY)));
+      const normalizedY = maxY === minY ? 0 : Math.min(1, Math.max(0, (d.value - minY) / (maxY - minY)));
       const y = padTop + (1 - normalizedY) * chartH;
       return { ...d, x, y };
     });
@@ -102,7 +126,6 @@ export default function BorrowingTrendChart({
     const scaleX = svgWidth / rect.width;
     const adjustedX = mouseX * scaleX;
 
-    // Find closest point by X coordinate
     let closestIdx = 0;
     let minDiff = Infinity;
     points.forEach((pt, idx) => {
@@ -121,8 +144,9 @@ export default function BorrowingTrendChart({
   };
 
   // Stats calculation
-  const highestValue = Math.max(...data.map(d => d.value));
-  const averageValue = Math.round(data.reduce((a, b) => a + b.value, 0) / data.length);
+  const highestValue = Math.max(...data.map((d) => d.value));
+  const totalBorrows = data.reduce((a, b) => a + b.value, 0);
+  const averageValue = (totalBorrows / data.length).toFixed(1);
 
   return (
     <div style={{
@@ -227,7 +251,7 @@ export default function BorrowingTrendChart({
           >
             <span>{activePoint.fullDate}</span>
             <span style={{ color: '#60A5FA', fontSize: '0.8rem', fontWeight: '800' }}>
-              {activePoint.value} borrows
+              {activePoint.value} {activePoint.value === 1 ? 'borrow' : 'borrows'}
             </span>
             <div style={{
               position: 'absolute',
@@ -318,23 +342,23 @@ export default function BorrowingTrendChart({
           {/* X-Axis Labels */}
           {timeRange === '30D' ? (
             <>
-              <text x={padLeft + 4} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Sep 1</text>
-              <text x={padLeft + chartW * 0.3} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Sep 11</text>
-              <text x={padLeft + chartW * 0.62} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Sep 21</text>
-              <text x={padLeft + chartW - 24} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Sep 30</text>
+              <text x={padLeft} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">{data[0]?.label}</text>
+              <text x={padLeft + chartW * 0.32} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">{data[10]?.label}</text>
+              <text x={padLeft + chartW * 0.65} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">{data[20]?.label}</text>
+              <text x={padLeft + chartW - 24} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">Today</text>
             </>
           ) : (
             <>
-              <text x={padLeft} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Oct 6</text>
-              <text x={padLeft + chartW * 0.33} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Oct 8</text>
-              <text x={padLeft + chartW * 0.66} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Oct 10</text>
-              <text x={padLeft + chartW - 20} y={svgHeight - 6} fontSize="8.5" fill="#94A3B8" fontWeight="600">Today</text>
+              <text x={padLeft} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">{data[0]?.label}</text>
+              <text x={padLeft + chartW * 0.33} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">{data[2]?.label}</text>
+              <text x={padLeft + chartW * 0.66} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">{data[4]?.label}</text>
+              <text x={padLeft + chartW - 20} y={svgHeight - 6} fontSize="8" fill="#94A3B8" fontWeight="600">Today</text>
             </>
           )}
         </svg>
       </div>
 
-      {/* Summary Footer Pills */}
+      {/* Summary Footer */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -346,14 +370,14 @@ export default function BorrowingTrendChart({
       }}>
         <div>
           <span>Peak: </span>
-          <strong style={{ color: '#0F1E36' }}>{highestValue} borrows</strong>
+          <strong style={{ color: '#0F1E36' }}>{highestValue} {highestValue === 1 ? 'borrow' : 'borrows'}</strong>
         </div>
         <div>
           <span>Avg: </span>
           <strong style={{ color: '#0F1E36' }}>{averageValue} / day</strong>
         </div>
-        <div style={{ color: '#15803D', fontWeight: '700' }}>
-          ↑ +18% trend
+        <div style={{ color: totalBorrows > 0 ? '#15803D' : '#94A3B8', fontWeight: '700' }}>
+          {totalBorrows > 0 ? '↑ Active' : 'No activity'}
         </div>
       </div>
     </div>
