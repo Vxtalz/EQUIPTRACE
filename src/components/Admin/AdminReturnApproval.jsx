@@ -46,14 +46,31 @@ export default function AdminReturnApproval({
 
   // Merge active borrowings from borrowings collection + any active approved requests
   const activeBorrowedItems = [];
+  const pendingFromBorrowings = [];
   const seenIds = new Set();
 
-  borrowings
-    .filter((b) => b.status === 'Active' || b.status === 'Borrowed' || !b.status)
-    .forEach((b) => {
-      const bKey = b.borrowId || b.id || b.firestoreId;
-      seenIds.add(bKey);
-      seenIds.add(b.id);
+  borrowings.forEach((b) => {
+    const bKey = b.borrowId || b.id || b.firestoreId;
+    seenIds.add(bKey);
+    seenIds.add(b.id);
+
+    if (b.status === 'Return Pending') {
+      pendingFromBorrowings.push({
+        ...b,
+        id: b.borrowId || b.id,
+        borrowId: b.borrowId || b.id,
+        borrowingDocId: b.firestoreId || '',
+        equipmentId: b.id,
+        equipmentName: b.name,
+        category: b.category || 'PE & Sports',
+        studentName: b.studentName || 'Student',
+        studentId: b.studentId || '2025-001',
+        status: 'Return Pending',
+        returnSubmittedTime: b.returnSubmittedTime || 'Just now',
+        returnSubmittedDate: b.returnSubmittedDate || 'Today',
+        condition: 'Good Condition',
+      });
+    } else {
       activeBorrowedItems.push({
         ...b,
         id: b.borrowId || b.id,
@@ -62,12 +79,13 @@ export default function AdminReturnApproval({
         equipmentName: b.name,
         studentName: b.studentName || 'Student',
         studentId: b.studentId || '2025-001',
-        status: 'Borrowed',
+        status: b.status === 'Overdue' ? 'Overdue' : 'Borrowed',
         returnSubmittedTime: 'With student',
         returnSubmittedDate: b.borrowedTime || 'Active',
         condition: 'In Use',
       });
-    });
+    }
+  });
 
   // Also include any approved requests from requests queue that haven't been returned yet
   adminRequests
@@ -96,7 +114,18 @@ export default function AdminReturnApproval({
       }
     });
 
-  const allItems = [...returnApprovals, ...activeBorrowedItems];
+  // Merge returnApprovals with any pending returns initiated from borrowings
+  const mergedReturnApprovals = [...returnApprovals];
+  pendingFromBorrowings.forEach((pItem) => {
+    const exists = mergedReturnApprovals.some(
+      (r) => r.borrowId === pItem.borrowId || (r.borrowingDocId && r.borrowingDocId === pItem.borrowingDocId)
+    );
+    if (!exists) {
+      mergedReturnApprovals.unshift(pItem);
+    }
+  });
+
+  const allItems = [...mergedReturnApprovals, ...activeBorrowedItems];
 
   // Filtering
   const filteredList = allItems.filter((item) => {
@@ -112,8 +141,8 @@ export default function AdminReturnApproval({
   });
 
   // Badge count for pending
-  const pendingCount = returnApprovals.filter((r) => r.status === 'Return Pending').length;
-  const inspectionCount = returnApprovals.filter((r) => r.status === 'Needs Inspection').length;
+  const pendingCount = mergedReturnApprovals.filter((r) => r.status === 'Return Pending').length;
+  const inspectionCount = mergedReturnApprovals.filter((r) => r.status === 'Needs Inspection').length;
 
   const handleOpenInspect = (item) => {
     setSelectedItem(item);

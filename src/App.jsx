@@ -64,6 +64,7 @@ import {
   INITIAL_ADMIN_KPIS,
   INITIAL_ADMIN_PENDING_REQUESTS,
   INITIAL_ADMIN_RECENT_TRANSACTIONS,
+  INITIAL_ADMIN_RETURN_APPROVALS,
 } from './data/adminMockData';
 
 export default function App() {
@@ -86,7 +87,7 @@ export default function App() {
   const [adminRequests, setAdminRequests] = useState(INITIAL_ADMIN_PENDING_REQUESTS);
   const [adminRecentTx, setAdminRecentTx] = useState(INITIAL_ADMIN_RECENT_TRANSACTIONS);
   const [adminEquipment, setAdminEquipment] = useState([]);
-  const [adminReturnApprovals, setAdminReturnApprovals] = useState([]);
+  const [adminReturnApprovals, setAdminReturnApprovals] = useState(INITIAL_ADMIN_RETURN_APPROVALS);
   const [adminDismissedReadIds, setAdminDismissedReadIds] = useState(() => new Set());
 
   // ── Modals ───────────────────────────────────────────────────────────────────
@@ -287,7 +288,9 @@ export default function App() {
       );
       unsubRefs.current.push(unsubTx);
 
-      const unsubReturns = subscribeReturnApprovals((rows) => setAdminReturnApprovals(rows));
+      const unsubReturns = subscribeReturnApprovals((rows) =>
+        setAdminReturnApprovals(rows && rows.length > 0 ? rows : INITIAL_ADMIN_RETURN_APPROVALS)
+      );
       unsubRefs.current.push(unsubReturns);
 
       // Subscribe to all notifications for Admin

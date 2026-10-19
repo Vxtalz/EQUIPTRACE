@@ -204,10 +204,17 @@ export async function updateRequest(firestoreId, fields) {
  * Subscribes to the `return_approvals` collection ordered by latest request.
  */
 export function subscribeReturnApprovals(callback) {
-  const q = query(collection(db, 'return_approvals'), orderBy('createdAt', 'desc'));
   return onSnapshot(
-    q,
-    (snap) => callback(snap2arr(snap)),
+    collection(db, 'return_approvals'),
+    (snap) => {
+      const arr = snap2arr(snap);
+      arr.sort((a, b) => {
+        const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+        const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+        return timeB - timeA;
+      });
+      callback(arr);
+    },
     (err) => console.warn('[Firestore] return_approvals sub error:', err)
   );
 }
