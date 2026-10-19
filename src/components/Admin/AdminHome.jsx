@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Bell,
   Package,
@@ -6,11 +6,6 @@ import {
   User,
   AlertCircle,
   Settings,
-  Search,
-  X,
-  SlidersHorizontal,
-  Calendar,
-  RotateCcw,
   Clock,
   ArrowRight
 } from 'lucide-react';
@@ -31,13 +26,7 @@ export default function AdminHome({
   const pendingItems = pendingRequests.filter(r => r.status === 'Pending');
   const pendingCount = pendingItems.length;
 
-  // ── Recent Transactions Search & Filter State ──────────────────────────────
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All'); // 'All' | 'Borrowed' | 'Returned' | 'Overdue'
-  const [dateFilter, setDateFilter] = useState('All Time'); // 'All Time' | 'Today' | 'Last 7 Days' | 'Last 30 Days'
-  const [showFilterModal, setShowFilterModal] = useState(false);
-
-  // Parse transaction date for sorting and filtering
+  // Parse transaction date for sorting
   const parseTxDate = (tx) => {
     if (!tx) return new Date(0);
     if (tx.createdAt) {
@@ -62,47 +51,6 @@ export default function AdminHome({
     return new Date(0);
   };
 
-  const isDateInRange = (d, range) => {
-    if (range === 'All Time') return true;
-    if (!d || isNaN(d.getTime()) || d.getTime() === 0) return true;
-    const now = new Date();
-    if (range === 'Today') {
-      return (
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate()
-      );
-    }
-    if (range === 'Last 7 Days') {
-      const past = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-      return d >= past;
-    }
-    if (range === 'Last 30 Days') {
-      const past = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
-      return d >= past;
-    }
-    return true;
-  };
-
-  const isStatusMatch = (status, filter) => {
-    if (filter === 'All') return true;
-    const s = (status || '').toLowerCase();
-    const f = filter.toLowerCase();
-    if (f === 'borrowed') return s === 'borrowed' || s === 'approved';
-    if (f === 'returned') return s.includes('returned');
-    if (f === 'overdue') return s === 'overdue';
-    return s === f;
-  };
-
-  const handleResetFilters = () => {
-    setSearchQuery('');
-    setStatusFilter('All');
-    setDateFilter('All Time');
-    setShowFilterModal(false);
-  };
-
-  const isFilterActive = statusFilter !== 'All' || dateFilter !== 'All Time';
-
   // 1. Sort the entire dataset by latest transaction date and time first
   const sortedTransactions = useMemo(() => {
     return [...recentTransactions].sort((a, b) => {
@@ -113,39 +61,10 @@ export default function AdminHome({
     });
   }, [recentTransactions]);
 
-  // 2. Filter the entire dataset by Search and Filters combined
-  const filteredTransactions = useMemo(() => {
-    return sortedTransactions.filter((tx) => {
-      // Search by student name and student ID (case-insensitive)
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const nameMatch = (tx.studentName || '').toLowerCase().includes(q);
-        const idMatch = (tx.studentId || '').toLowerCase().includes(q);
-        const equipMatch = (tx.equipment || tx.equipmentName || '').toLowerCase().includes(q);
-        const equipIdMatch = (tx.equipmentId || tx.equipmentCode || '').toLowerCase().includes(q);
-        if (!nameMatch && !idMatch && !equipMatch && !equipIdMatch) {
-          return false;
-        }
-      }
-
-      // Status filter
-      if (!isStatusMatch(tx.status, statusFilter)) {
-        return false;
-      }
-
-      // Date range filter
-      if (!isDateInRange(parseTxDate(tx), dateFilter)) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [sortedTransactions, searchQuery, statusFilter, dateFilter]);
-
-  // 3. Take a maximum of 5 recent transactions only
+  // 2. Take a maximum of 5 recent transactions only for the Home dashboard
   const displayedTransactions = useMemo(() => {
-    return filteredTransactions.slice(0, 5);
-  }, [filteredTransactions]);
+    return sortedTransactions.slice(0, 5);
+  }, [sortedTransactions]);
 
   // Status badge styling helper
   const renderStatusBadge = (status) => {
@@ -509,8 +428,8 @@ export default function AdminHome({
             <h3 style={{ fontSize: '1rem', fontWeight: '800', color: '#0F1E36', margin: 0 }}>
               Recent transactions
             </h3>
-            <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
-              Showing latest {displayedTransactions.length} of {filteredTransactions.length}
+            <span style={{ fontSize: '0.75rem', color: '#64748B', display: 'block', marginTop: '2px' }}>
+              Showing latest {displayedTransactions.length} of {recentTransactions.length}
             </span>
           </div>
 
@@ -535,245 +454,19 @@ export default function AdminHome({
           </button>
         </div>
 
-        {/* ── Search Bar & Filter Button Control ── */}
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {/* Search Input */}
-          <div style={{
-            position: 'relative',
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center'
-          }}>
-            <Search
-              size={16}
-              color="#64748B"
-              style={{ position: 'absolute', left: '12px', pointerEvents: 'none' }}
-            />
-            <input
-              type="text"
-              placeholder="Search student name or ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                height: '40px',
-                padding: '0 34px 0 36px',
-                borderRadius: '12px',
-                border: '1px solid #E2E8F0',
-                backgroundColor: '#F8FAFC',
-                fontSize: '0.825rem',
-                color: '#0F1E36',
-                outline: 'none',
-                fontFamily: 'inherit',
-                transition: 'border-color 0.15s ease'
-              }}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-                style={{
-                  position: 'absolute',
-                  right: '8px',
-                  background: '#E2E8F0',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '20px',
-                  height: '20px',
-                  color: '#475569',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0
-                }}
-              >
-                <X size={12} strokeWidth={2.5} />
-              </button>
-            )}
-          </div>
-
-          {/* Filter Modal Trigger Button */}
-          <button
-            type="button"
-            onClick={() => setShowFilterModal(true)}
-            style={{
-              height: '40px',
-              padding: '0 12px',
-              borderRadius: '12px',
-              border: isFilterActive ? '1px solid #1D61E7' : '1px solid #E2E8F0',
-              backgroundColor: isFilterActive ? '#EEF4FF' : '#F8FAFC',
-              color: isFilterActive ? '#1D61E7' : '#475569',
-              fontWeight: '700',
-              fontSize: '0.8rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer',
-              flexShrink: 0
-            }}
-          >
-            <SlidersHorizontal size={15} strokeWidth={2.2} />
-            <span>Filter</span>
-            {isFilterActive && (
-              <span style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: '#1D61E7'
-              }} />
-            )}
-          </button>
-        </div>
-
-        {/* ── Status Quick Filter Pills ── */}
-        <div style={{
-          display: 'flex',
-          gap: '6px',
-          overflowX: 'auto',
-          paddingBottom: '2px',
-          scrollbarWidth: 'none'
-        }}>
-          {['All', 'Borrowed', 'Returned', 'Overdue'].map((status) => {
-            const isSelected = statusFilter === status;
-            return (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setStatusFilter(status)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: '9999px',
-                  border: isSelected ? '1px solid #1D61E7' : '1px solid #E2E8F0',
-                  backgroundColor: isSelected ? '#1D61E7' : '#FFFFFF',
-                  color: isSelected ? '#FFFFFF' : '#64748B',
-                  fontSize: '0.75rem',
-                  fontWeight: isSelected ? '700' : '600',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                {status}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── Active Filters Summary / Reset Bar ── */}
-        {(isFilterActive || searchQuery) && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '6px 10px',
-            backgroundColor: '#F1F5F9',
-            borderRadius: '10px',
-            fontSize: '0.75rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              <span style={{ color: '#64748B', fontWeight: '500' }}>Active:</span>
-              {statusFilter !== 'All' && (
-                <span style={{
-                  backgroundColor: '#FFFFFF',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  fontWeight: '700',
-                  color: '#1D61E7',
-                  border: '1px solid #CBD5E1'
-                }}>
-                  {statusFilter}
-                </span>
-              )}
-              {dateFilter !== 'All Time' && (
-                <span style={{
-                  backgroundColor: '#FFFFFF',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  fontWeight: '700',
-                  color: '#1D61E7',
-                  border: '1px solid #CBD5E1'
-                }}>
-                  {dateFilter}
-                </span>
-              )}
-              {searchQuery && (
-                <span style={{
-                  backgroundColor: '#FFFFFF',
-                  padding: '2px 8px',
-                  borderRadius: '6px',
-                  fontWeight: '700',
-                  color: '#0F1E36',
-                  border: '1px solid #CBD5E1'
-                }}>
-                  "{searchQuery}"
-                </span>
-              )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#DC2626',
-                fontWeight: '700',
-                cursor: 'pointer',
-                fontSize: '0.75rem',
-                padding: '2px 4px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '3px'
-              }}
-            >
-              <RotateCcw size={11} />
-              <span>Reset</span>
-            </button>
-          </div>
-        )}
-
         {/* ── Transactions List (Max 5 Displayed) ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {displayedTransactions.length === 0 ? (
             <div style={{
-              padding: '28px 16px',
+              padding: '24px 16px',
               textAlign: 'center',
               backgroundColor: '#F8FAFC',
               borderRadius: '14px',
-              border: '1px dashed #CBD5E1',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '8px'
+              border: '1px dashed #CBD5E1'
             }}>
-              <Search size={24} color="#94A3B8" />
-              <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#0F1E36', margin: 0 }}>
-                No matching transactions found.
+              <p style={{ fontSize: '0.85rem', color: '#94A3B8', margin: 0 }}>
+                No recent transactions recorded.
               </p>
-              <p style={{ fontSize: '0.78rem', color: '#64748B', margin: 0 }}>
-                Try adjusting your search terms or filter selections.
-              </p>
-              {(searchQuery || isFilterActive) && (
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  style={{
-                    marginTop: '4px',
-                    padding: '6px 14px',
-                    backgroundColor: '#EEF4FF',
-                    color: '#1D61E7',
-                    border: '1px solid #BFDBFE',
-                    borderRadius: '9999px',
-                    fontSize: '0.78rem',
-                    fontWeight: '700',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Clear search & filters
-                </button>
-              )}
             </div>
           ) : (
             displayedTransactions.map((tx) => {
@@ -862,8 +555,8 @@ export default function AdminHome({
           )}
         </div>
 
-        {/* View All Prompt when more than 5 matching records exist */}
-        {filteredTransactions.length > 5 && (
+        {/* View All Prompt when more than 5 records exist */}
+        {recentTransactions.length > 5 && (
           <button
             type="button"
             onClick={() => onNavigateTab('requests')}
@@ -884,180 +577,11 @@ export default function AdminHome({
               marginTop: '4px'
             }}
           >
-            <span>View all {filteredTransactions.length} records in Requests</span>
+            <span>View all {recentTransactions.length} records in Requests</span>
             <ArrowRight size={14} />
           </button>
         )}
       </div>
-
-      {/* ── Filter Bottom Sheet / Modal ── */}
-      {showFilterModal && (
-        <div
-          onClick={() => setShowFilterModal(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.65)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            backdropFilter: 'blur(3px)',
-            animation: 'fadeIn 0.2s ease'
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: '480px',
-              backgroundColor: '#FFFFFF',
-              borderTopLeftRadius: '24px',
-              borderTopRightRadius: '24px',
-              padding: '20px 22px 28px 22px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '18px',
-              boxShadow: '0 -10px 40px rgba(0,0,0,0.25)',
-              maxHeight: '85vh',
-              overflowY: 'auto'
-            }}
-          >
-            {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0F1E36', margin: 0 }}>
-                  Filter Transactions
-                </h4>
-                <p style={{ fontSize: '0.78rem', color: '#64748B', margin: '2px 0 0 0' }}>
-                  Filter by transaction status and date range
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFilterModal(false)}
-                style={{
-                  background: '#F1F5F9',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: '#64748B'
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Filter Section 1: Transaction Status */}
-            <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#0F1E36', display: 'block', marginBottom: '8px' }}>
-                Transaction Status
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                {['All', 'Borrowed', 'Returned', 'Overdue'].map((opt) => {
-                  const isSel = statusFilter === opt;
-                  return (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() => setStatusFilter(opt)}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: '12px',
-                        border: isSel ? '2px solid #1D61E7' : '1px solid #E2E8F0',
-                        backgroundColor: isSel ? '#EEF4FF' : '#FFFFFF',
-                        color: isSel ? '#1D61E7' : '#0F1E36',
-                        fontWeight: isSel ? '800' : '600',
-                        fontSize: '0.825rem',
-                        cursor: 'pointer',
-                        textAlign: 'center'
-                      }}
-                    >
-                      {opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Filter Section 2: Date Range */}
-            <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: '700', color: '#0F1E36', display: 'block', marginBottom: '8px' }}>
-                Date Range
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                {['All Time', 'Today', 'Last 7 Days', 'Last 30 Days'].map((range) => {
-                  const isSel = dateFilter === range;
-                  return (
-                    <button
-                      key={range}
-                      type="button"
-                      onClick={() => setDateFilter(range)}
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: '12px',
-                        border: isSel ? '2px solid #1D61E7' : '1px solid #E2E8F0',
-                        backgroundColor: isSel ? '#EEF4FF' : '#FFFFFF',
-                        color: isSel ? '#1D61E7' : '#0F1E36',
-                        fontWeight: isSel ? '800' : '600',
-                        fontSize: '0.825rem',
-                        cursor: 'pointer',
-                        textAlign: 'center'
-                      }}
-                    >
-                      {range}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Modal Actions */}
-            <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-              <button
-                type="button"
-                onClick={handleResetFilters}
-                style={{
-                  flex: 1,
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  border: '1px solid #E2E8F0',
-                  backgroundColor: '#FFFFFF',
-                  color: '#64748B',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer'
-                }}
-              >
-                Reset All
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowFilterModal(false)}
-                style={{
-                  flex: 1.5,
-                  padding: '12px 16px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backgroundColor: '#1D61E7',
-                  color: '#FFFFFF',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(29, 97, 231, 0.35)'
-                }}
-              >
-                Apply Filters ({filteredTransactions.length})
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Clearance spacer for floating bottom navigation bar */}
       <div style={{ height: '96px', flexShrink: 0, minHeight: '96px' }} />
