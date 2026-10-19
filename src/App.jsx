@@ -453,16 +453,52 @@ export default function App() {
     const item = borrowings.find((b) => b.borrowId === borrowId);
     if (!item) return;
 
+    // Immediately update local borrowings optimistically
+    setBorrowings((prev) =>
+      prev.map((b) => (b.borrowId === borrowId ? { ...b, status: 'Return Pending' } : b))
+    );
+
+    const todayDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
+    const todayTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const newReturnRecord = {
+      id: `RET-${Date.now()}`,
+      borrowId: item.borrowId,
+      borrowingDocId: item.firestoreId || '',
+      equipmentId: item.id,
+      equipmentName: item.name,
+      category: item.category || 'PE & Sports',
+      studentId: item.studentId || (student ? student.id : '2025-001'),
+      studentName: item.studentName || (student ? student.name : 'Student'),
+      borrowedTime: item.borrowedTime || 'Today',
+      returnSubmittedTime: todayTime,
+      returnSubmittedDate: todayDate,
+      status: 'Return Pending',
+      condition: 'Good Condition',
+      notes: '',
+    };
+
+    setAdminReturnApprovals((prev) => [
+      newReturnRecord,
+      ...prev.filter((r) => r.borrowId !== item.borrowId),
+    ]);
+
     // Enter Return Pending status in Firestore
-    await submitReturnPending(item);
+    try {
+      await submitReturnPending(item);
+    } catch (e) {
+      console.warn('submitReturnPending error:', e.message);
+    }
 
     const pendingNotif = {
-      studentId: authUser.uid,
+      studentId: authUser?.uid || 'all',
       title: 'Return Submitted',
       message: `You handed in ${item.name}. Status is now "Return Pending" awaiting admin physical inspection.`,
       time: 'Just now',
     };
-    await addNotification(pendingNotif);
+    try {
+      await addNotification(pendingNotif);
+    } catch (e) {}
     triggerPushBanner(pendingNotif);
 
     triggerToast(`Submitted return for ${item.name}. Awaiting admin approval.`);
@@ -472,28 +508,98 @@ export default function App() {
   const handleApproveReturn = async (approvalData) => {
     const adminName = student?.name || authUser?.displayName || authUser?.email?.split('@')[0] || 'Administrator';
     const adminUid = authUser?.uid || '';
+    const today = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date());
 
-    // If initiated directly from the Borrowed tab without a pre-existing return_approvals doc
-    if (!approvalData.returnDocId) {
-      const newReturnDocId = await submitReturnPending({
-        borrowId: approvalData.borrowId || `BORROW-${Date.now()}`,
-        firestoreId: approvalData.borrowingDocId,
-        id: approvalData.equipmentId,
-        name: approvalData.equipmentName,
-        category: approvalData.category || 'PE & Sports',
-        studentId: approvalData.studentId,
-        studentName: approvalData.studentName,
+    // 1. Optimistically update local return_approvals
+    setAdminReturnApprovals((prev) =>
+      prev.map((r) =>
+        r.firestoreId === approvalData.returnDocId || r.id === approvalData.returnDocId || r.borrowId === approvalData.borrowId
+          ? { ...r, status: 'Returned', condition: approvalData.condition || 'Good Condition' }
+          : r
+      )
+    );
+
+    // 2. Optimistically remove from active borrowings
+    setBorrowings((prev) =>
+      prev.filter(
+        (b) =>
+          b.borrowId !== approvalData.borrowId &&
+          b.firestoreId !== approvalData.borrowingDocId
+      )
+    );
+
+    // 3. Optimistically add to history
+    const historyItem = {
+      id: `HIST-${Date.now()}`,
+      studentId: approvalData.studentId,
+      equipmentId: approvalData.equipmentId,
+      name: approvalData.equipmentName,
+      borrowedDate: 'Previous',
+      returnedDate: `${today} ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+      status: approvalData.condition === 'Good Condition' ? 'Returned on time' : `Returned (${approvalData.condition})`,
+      condition: approvalData.condition || 'Good Condition',
+      notes: approvalData.notes || '',
+      approvedBy: adminName,
+    };
+    setHistory((prev) => [historyItem, ...prev]);
+
+    // 4. Optimistically add to transactions ledger
+    const txItem = {
+      id: `TX-${Date.now()}`,
+      studentName: approvalData.studentName,
+      studentId: approvalData.studentId || '',
+      studentInitials: approvalData.studentName ? approvalData.studentName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'ST',
+      equipment: `${approvalData.equipmentName} (${approvalData.equipmentId})`,
+      equipmentName: approvalData.equipmentName,
+      equipmentId: approvalData.equipmentId,
+      date: today,
+      status: 'Returned',
+    };
+    setAdminRecentTx((prev) => [txItem, ...prev]);
+
+    // 5. Optimistically update adminRequests if matching
+    setAdminRequests((prev) =>
+      prev.map((r) =>
+        (r.studentName === approvalData.studentName && (r.equipmentName === approvalData.equipmentName || r.equipmentId === approvalData.equipmentId))
+          ? { ...r, status: 'Returned' }
+          : r
+      )
+    );
+
+    // 6. Restock equipment count
+    setAdminEquipment((prev) =>
+      prev.map((eq) =>
+        (eq.id || '').toUpperCase() === (approvalData.equipmentId || '').toUpperCase()
+          ? { ...eq, available: (eq.available || 0) + 1 }
+          : eq
+      )
+    );
+
+    // 7. Persist to Firestore
+    try {
+      if (!approvalData.returnDocId) {
+        const newReturnDocId = await submitReturnPending({
+          borrowId: approvalData.borrowId || `BORROW-${Date.now()}`,
+          firestoreId: approvalData.borrowingDocId,
+          id: approvalData.equipmentId,
+          name: approvalData.equipmentName,
+          category: approvalData.category || 'PE & Sports',
+          studentId: approvalData.studentId,
+          studentName: approvalData.studentName,
+        });
+        approvalData.returnDocId = newReturnDocId;
+      }
+
+      await approveReturnSubmission({
+        ...approvalData,
+        adminName,
+        adminUid,
       });
-      approvalData.returnDocId = newReturnDocId;
+    } catch (err) {
+      console.warn('[Approve Return Firestore]', err);
     }
 
-    await approveReturnSubmission({
-      ...approvalData,
-      adminName,
-      adminUid,
-    });
-
-    triggerToast(`Approved return of ${approvalData.equipmentName} (${approvalData.condition})`);
+    triggerToast(`Approved return of ${approvalData.equipmentName} (${approvalData.condition || 'Good Condition'})`);
   };
 
   const handleFlagInspection = async (flagData) => {
@@ -927,8 +1033,14 @@ export default function App() {
           {currentTab === 'requests' && (
             <AdminRequests
               requests={adminRequests}
+              returnApprovals={adminReturnApprovals}
+              borrowings={borrowings}
+              history={history}
+              transactions={adminRecentTx}
+              equipmentList={adminEquipment.length > 0 ? adminEquipment : equipmentList}
               onApproveRequest={handleApproveAdminRequest}
               onRejectRequest={handleRejectAdminRequest}
+              onApproveReturn={handleApproveReturn}
               onOpenNotifications={() => setShowNotifications(true)}
               onOpenSettings={() => setCurrentTab('more')}
               unreadCount={unreadNotifCount}
