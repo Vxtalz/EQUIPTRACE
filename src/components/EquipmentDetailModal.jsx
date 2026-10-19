@@ -521,26 +521,28 @@ export default function EquipmentDetailModal({
           onClick={handleConfirm}
           style={{
             width: '100%',
-            height: '50px',
+            minHeight: '58px',
+            height: '58px',
+            padding: '0 24px',
             backgroundColor: agreed && !submitting ? '#1D61E7' : '#94A3B8',
             color: '#FFFFFF',
             border: 'none',
-            borderRadius: '14px',
-            fontSize: '1rem',
-            fontWeight: '700',
+            borderRadius: '16px',
+            fontSize: '1.05rem',
+            fontWeight: '800',
             cursor: agreed && !submitting ? 'pointer' : 'not-allowed',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px',
-            boxShadow: agreed ? '0 4px 14px rgba(29, 97, 231, 0.3)' : 'none',
+            gap: '10px',
+            boxShadow: agreed ? '0 6px 18px rgba(29, 97, 231, 0.35)' : 'none',
             fontFamily: 'inherit',
             transition: 'all 0.15s ease',
             touchAction: 'manipulation',
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          <Check size={20} />
+          <Check size={22} strokeWidth={2.8} />
           {submitting ? 'Submitting Request...' : 'Confirm Borrowing'}
         </button>
       </div>

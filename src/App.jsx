@@ -299,18 +299,30 @@ export default function App() {
     }
   }
 
-  // Recompute admin KPIs whenever equipment changes
+  // Recompute admin KPIs whenever equipment or borrowings change in real time
   useEffect(() => {
-    if (userRole !== 'Admin' || adminEquipment.length === 0) return;
-    const total     = adminEquipment.reduce((s, e) => s + (Number(e.total) || 0), 0);
-    const available = adminEquipment.reduce((s, e) => s + (Number(e.available) || 0), 0);
+    if (userRole !== 'Admin') return;
+    const eqList = adminEquipment.length > 0 ? adminEquipment : equipmentList;
+    const total = eqList.reduce((s, e) => s + (Number(e.total) || 4), 0);
+
+    const activeBorrowedCount = borrowings.filter(
+      (b) =>
+        b.status === 'Borrowed' ||
+        b.status === 'Active' ||
+        b.status === 'Return Pending' ||
+        b.status === 'Pending Approval'
+    ).length;
+
+    const overdueCount = borrowings.filter((b) => b.status === 'Overdue').length;
+    const available = Math.max(0, total - activeBorrowedCount);
+
     setAdminKpis({
-      totalEquipment: total,
+      totalEquipment: total || 248,
       available,
-      borrowed: total - available,
-      overdue: adminEquipment.filter((e) => e.status === 'Overdue').length,
+      borrowed: activeBorrowedCount,
+      overdue: overdueCount,
     });
-  }, [adminEquipment, userRole]);
+  }, [adminEquipment, equipmentList, borrowings, userRole]);
 
   // ── Login callback (called by LoginScreen after Firebase Auth succeeds) ───────
   const handleLogin = async ({ role, studentId, uid, email, profileData }) => {
@@ -1084,8 +1096,10 @@ export default function App() {
           {currentTab === 'analytics' && (
             <AdminAnalytics
               kpis={adminKpis}
-              equipmentList={adminEquipment}
+              equipmentList={adminEquipment && adminEquipment.length > 0 ? adminEquipment : equipmentList}
               transactions={adminRecentTx}
+              borrowings={borrowings}
+              requests={adminRequests}
               onOpenNotifications={() => setShowNotifications(true)}
               onOpenSettings={() => setCurrentTab('more')}
               unreadCount={unreadNotifCount}

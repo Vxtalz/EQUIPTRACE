@@ -266,21 +266,23 @@ export default function AdminReturnApproval({
               }}
             />
             <div style={{ borderLeft: '2px solid #CBD5E1', paddingLeft: '10px', minWidth: 0, flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0F1E36', letterSpacing: '-0.3px', margin: 0, lineHeight: '1.2' }}>
-                  Return Approval
-                </h2>
-                {pendingCount > 0 && (
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0F1E36', letterSpacing: '-0.3px', margin: 0, lineHeight: '1.2' }}>
+                Return Approval
+              </h2>
+              <p style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: '500', margin: '2px 0 0 0', lineHeight: '1.3' }}>
+                Verify physical condition and finalize returns
+              </p>
+              {pendingCount > 0 && (
+                <div style={{ marginTop: '6px' }}>
                   <span
                     style={{
                       backgroundColor: '#EF4444',
                       color: '#FFFFFF',
-                      fontSize: '0.7rem',
+                      fontSize: '0.72rem',
                       fontWeight: '800',
-                      padding: '2px 8px',
+                      padding: '3px 10px',
                       borderRadius: '9999px',
                       boxShadow: '0 2px 6px rgba(239,68,68,0.25)',
-                      whiteSpace: 'nowrap',
                       display: 'inline-flex',
                       alignItems: 'center',
                       lineHeight: '1.2',
@@ -288,11 +290,8 @@ export default function AdminReturnApproval({
                   >
                     {pendingCount} Pending
                   </span>
-                )}
-              </div>
-              <p style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '500', margin: '2px 0 0 0', lineHeight: '1.3' }}>
-                Verify physical condition and finalize returns
-              </p>
+                </div>
+              )}
             </div>
           </div>
 

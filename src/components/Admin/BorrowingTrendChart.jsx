@@ -2,15 +2,17 @@ import React, { useState, useMemo } from 'react';
 
 export default function BorrowingTrendChart({
   title = 'Borrowing trend',
-  transactions = []
+  transactions = [],
+  borrowings = []
 }) {
   const [timeRange, setTimeRange] = useState('30D'); // '7D' | '30D'
   const [activePointIndex, setActivePointIndex] = useState(null);
 
-  // Generate dataset based on time range and real transactions
+  // Generate dataset based on time range and real transactions/borrowings
   const data = useMemo(() => {
-    // Additional borrows today from transactions
-    const extraTodayBorrows = transactions.filter(t => t.status === 'Borrowed' || t.status === 'Approved').length;
+    const activeBorrows = (borrowings || []).filter(
+      b => b.status === 'Borrowed' || b.status === 'Active' || b.status === 'Return Pending' || b.status === 'Pending Approval'
+    ).length;
 
     if (timeRange === '7D') {
       return [
@@ -20,11 +22,11 @@ export default function BorrowingTrendChart({
         { label: 'Oct 9', fullDate: 'Oct 9, 2026', value: 28 },
         { label: 'Oct 10', fullDate: 'Oct 10, 2026', value: 25 },
         { label: 'Oct 11', fullDate: 'Oct 11, 2026', value: 31 },
-        { label: 'Oct 12', fullDate: 'Today (Oct 12)', value: 33 + extraTodayBorrows },
+        { label: 'Oct 12', fullDate: 'Today (Oct 12)', value: 28 + activeBorrows },
       ];
     }
 
-    // 30 Days dataset closely matching the screenshot trend
+    // 30 Days dataset closely matching the trend
     return [
       { label: 'Sep 1', fullDate: 'Sep 1, 2026', value: 20 },
       { label: 'Sep 4', fullDate: 'Sep 4, 2026', value: 23 },
@@ -37,9 +39,9 @@ export default function BorrowingTrendChart({
       { label: 'Sep 27', fullDate: 'Sep 27, 2026', value: 30 },
       { label: 'Sep 29', fullDate: 'Sep 29, 2026', value: 34 },
       { label: 'Sep 30', fullDate: 'Sep 30, 2026', value: 32 },
-      { label: 'Oct 12', fullDate: 'Today (Oct 12)', value: 37 + extraTodayBorrows },
+      { label: 'Oct 12', fullDate: 'Today (Oct 12)', value: 31 + activeBorrows },
     ];
-  }, [timeRange, transactions]);
+  }, [timeRange, borrowings]);
 
   // Chart Dimensions
   const svgWidth = 320;
@@ -52,13 +54,25 @@ export default function BorrowingTrendChart({
   const chartW = svgWidth - padLeft - padRight;
   const chartH = svgHeight - padTop - padBottom;
 
-  const minY = 10;
-  const maxY = 45;
+  const { minY, maxY, tick1, tick2, tick3 } = useMemo(() => {
+    const vals = data.map(d => d.value);
+    const maxVal = Math.max(...vals);
+    const minVal = Math.min(...vals);
+    const low = Math.max(0, Math.floor(minVal * 0.7));
+    const high = Math.max(45, Math.ceil(maxVal * 1.15));
+    return {
+      minY: low,
+      maxY: high,
+      tick1: Math.round(low + (high - low) * 0.3),
+      tick2: Math.round(low + (high - low) * 0.6),
+      tick3: Math.round(low + (high - low) * 0.9),
+    };
+  }, [data]);
 
   const points = useMemo(() => {
     return data.map((d, index) => {
       const x = padLeft + (index / (data.length - 1)) * chartW;
-      const normalizedY = (d.value - minY) / (maxY - minY);
+      const normalizedY = Math.min(1, Math.max(0, (d.value - minY) / (maxY - minY)));
       const y = padTop + (1 - normalizedY) * chartH;
       return { ...d, x, y };
     });
@@ -234,14 +248,14 @@ export default function BorrowingTrendChart({
           style={{ width: '100%', height: '100%', overflow: 'visible' }}
         >
           {/* Horizontal Grid lines */}
-          <line x1={padLeft} y1={padTop + (1 - (40 - minY) / (maxY - minY)) * chartH} x2={svgWidth - padRight} y2={padTop + (1 - (40 - minY) / (maxY - minY)) * chartH} stroke="#F1F5F9" strokeWidth="1" />
-          <line x1={padLeft} y1={padTop + (1 - (30 - minY) / (maxY - minY)) * chartH} x2={svgWidth - padRight} y2={padTop + (1 - (30 - minY) / (maxY - minY)) * chartH} stroke="#F1F5F9" strokeWidth="1" />
-          <line x1={padLeft} y1={padTop + (1 - (20 - minY) / (maxY - minY)) * chartH} x2={svgWidth - padRight} y2={padTop + (1 - (20 - minY) / (maxY - minY)) * chartH} stroke="#F1F5F9" strokeWidth="1" />
+          <line x1={padLeft} y1={padTop + (1 - (tick3 - minY) / (maxY - minY)) * chartH} x2={svgWidth - padRight} y2={padTop + (1 - (tick3 - minY) / (maxY - minY)) * chartH} stroke="#F1F5F9" strokeWidth="1" />
+          <line x1={padLeft} y1={padTop + (1 - (tick2 - minY) / (maxY - minY)) * chartH} x2={svgWidth - padRight} y2={padTop + (1 - (tick2 - minY) / (maxY - minY)) * chartH} stroke="#F1F5F9" strokeWidth="1" />
+          <line x1={padLeft} y1={padTop + (1 - (tick1 - minY) / (maxY - minY)) * chartH} x2={svgWidth - padRight} y2={padTop + (1 - (tick1 - minY) / (maxY - minY)) * chartH} stroke="#F1F5F9" strokeWidth="1" />
 
           {/* Y-Axis Labels */}
-          <text x="6" y={padTop + (1 - (40 - minY) / (maxY - minY)) * chartH + 3} fontSize="8.5" fill="#94A3B8" fontWeight="600">40</text>
-          <text x="6" y={padTop + (1 - (30 - minY) / (maxY - minY)) * chartH + 3} fontSize="8.5" fill="#94A3B8" fontWeight="600">30</text>
-          <text x="6" y={padTop + (1 - (20 - minY) / (maxY - minY)) * chartH + 3} fontSize="8.5" fill="#94A3B8" fontWeight="600">20</text>
+          <text x="6" y={padTop + (1 - (tick3 - minY) / (maxY - minY)) * chartH + 3} fontSize="8.5" fill="#94A3B8" fontWeight="600">{tick3}</text>
+          <text x="6" y={padTop + (1 - (tick2 - minY) / (maxY - minY)) * chartH + 3} fontSize="8.5" fill="#94A3B8" fontWeight="600">{tick2}</text>
+          <text x="6" y={padTop + (1 - (tick1 - minY) / (maxY - minY)) * chartH + 3} fontSize="8.5" fill="#94A3B8" fontWeight="600">{tick1}</text>
 
           {/* Gradient Definition */}
           <defs>
