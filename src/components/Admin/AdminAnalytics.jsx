@@ -47,6 +47,8 @@ export default function AdminAnalytics({
       Tennis: '🎾',
       Football: '⚽',
       Badminton: '🏸',
+      'Track & Field': '🏃',
+      'Track and Field': '🏃',
       Futsal: '⚽',
       Billiards: '🎱',
       'Sepak Takraw': '🏐',
@@ -55,16 +57,22 @@ export default function AdminAnalytics({
     const getEquipmentCategory = (item) => {
       const name = (item.equipmentName || item.name || item.category || '').trim();
       const n = name.toLowerCase();
-      if (n.includes('beach volleyball')) return 'Beach Volleyball';
+      if (n.includes('beach volleyball') || (n.includes('volleyball') && n.includes('sand'))) return 'Beach Volleyball';
       if (n.includes('volleyball')) return 'Volleyball';
       if (n.includes('basketball')) return 'Basketball';
       if (n.includes('table tennis') || n.includes('paddle') || n.includes('ping pong')) return 'Table Tennis';
       if (n.includes('tennis')) return 'Tennis Racket';
-      if (n.includes('badminton')) return 'Badminton';
+      if (n.includes('badminton') || n.includes('shuttlecock')) return 'Badminton';
+      if (n.includes('track') || n.includes('field') || n.includes('baton') || n.includes('shot put') || n.includes('hurdle') || n.includes('stopwatch')) return 'Track & Field';
       if (n.includes('football') || n.includes('soccer')) return 'Football';
       if (n.includes('futsal')) return 'Futsal';
-      if (n.includes('billiard') || n.includes('pool')) return 'Billiards';
+      if (n.includes('billiard') || n.includes('pool') || n.includes('cue')) return 'Billiards';
       if (n.includes('sepak') || n.includes('takraw')) return 'Sepak Takraw';
+
+      // If specific sport/equipment not matching above keywords
+      if (name && !n.includes('sports equipment') && !n.includes('pe & sports') && n !== 'sports') {
+        return name;
+      }
       return null;
     };
 
@@ -95,8 +103,7 @@ export default function AdminAnalytics({
         icon: icons[name] || '🏀',
         count,
       }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 4);
+      .sort((a, b) => b.count - a.count);
 
     const maxCount = Math.max(...sorted.map((item) => item.count), 1);
 
